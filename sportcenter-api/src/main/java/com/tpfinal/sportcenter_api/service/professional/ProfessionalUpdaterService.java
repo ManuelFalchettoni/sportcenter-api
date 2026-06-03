@@ -1,0 +1,25 @@
+package com.tpfinal.sportcenter_api.service.professional;
+
+import com.tpfinal.sportcenter_api.dto.request.professional.ProfessionalRequest;
+import com.tpfinal.sportcenter_api.entity.professional.Professional;
+import com.tpfinal.sportcenter_api.repository.professional.JpaProfessionalRepository;
+import org.springframework.stereotype.Service;
+
+@Service
+public class ProfessionalUpdaterService {
+    private final JpaProfessionalRepository jpaProfessionalRepository;
+    private final ProfessionalFinderService professionalFinderService;
+
+    public ProfessionalUpdaterService(JpaProfessionalRepository jpaProfessionalRepository, ProfessionalFinderService professionalFinderService) {
+        this.jpaProfessionalRepository = jpaProfessionalRepository;
+        this.professionalFinderService = professionalFinderService;
+    }
+
+    public Professional update(ProfessionalRequest request, Long id){
+        Professional professional = professionalFinderService.find(id);
+        professional.setName(request.getName());
+        professional.setSpeciality(request.getSpeciality());
+        professional.setActive(request.isActive());
+        return jpaProfessionalRepository.save(professional);
+    }
+}
