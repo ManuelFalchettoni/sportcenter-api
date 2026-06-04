@@ -1,0 +1,66 @@
+package com.tpfinal.sportcenter_api.entity.servicetype;
+
+import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.PositiveOrZero;
+
+import java.math.BigDecimal;
+
+@Entity
+@Table(name = "service_types")
+public class ServiceType {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    @NotBlank
+    @Column(nullable = false)
+    private String name;
+    @Positive
+    @Column(nullable = false)
+    private int durationMinutes;
+    @NotNull
+    @PositiveOrZero
+    @Column(nullable = false)
+    private BigDecimal price;
+
+    public ServiceType(){};
+    public ServiceType(String name, int durationMinutes, BigDecimal price) {
+        this.name = name;
+        this.durationMinutes = durationMinutes;
+        this.price = price;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public int getDurationMinutes() {
+        return durationMinutes;
+    }
+
+    public void setDurationMinutes(int durationMinutes) {
+        this.durationMinutes = durationMinutes;
+    }
+
+    public BigDecimal getPrice() {
+        return price;
+    }
+
+    public void setPrice(BigDecimal price) {
+        this.price = price;
+    }
+}
