@@ -7,10 +7,10 @@ public class ProfessionalResponse {
     private Long id;
     private String name;
     private String speciality;
-    private boolean active;
+    private Boolean active;
 
     public ProfessionalResponse(){};
-    public ProfessionalResponse(Long id, String name, String speciality, boolean active) {
+    public ProfessionalResponse(Long id, String name, String speciality, Boolean active) {
         this.id = id;
         this.name = name;
         this.speciality = speciality;
@@ -50,11 +50,11 @@ public class ProfessionalResponse {
         this.speciality = speciality;
     }
 
-    public boolean isActive() {
+    public Boolean getActive() {
         return active;
     }
 
-    public void setActive(boolean active) {
+    public void setActive(Boolean active) {
         this.active = active;
     }
 }

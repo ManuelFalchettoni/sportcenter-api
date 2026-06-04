@@ -19,7 +19,7 @@ public class ProfessionalUpdaterService {
         Professional professional = professionalFinderService.find(id);
         professional.setName(request.getName());
         professional.setSpeciality(request.getSpeciality());
-        professional.setActive(request.isActive());
+        professional.setActive(request.getActive());
         return jpaProfessionalRepository.save(professional);
     }
 }

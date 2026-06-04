@@ -17,7 +17,8 @@ public class Professional {
     @Column(nullable = false)
     private String speciality;
     @NotNull
-    private boolean active;
+    @Column(nullable = false)
+    private Boolean active;
 
     public Professional(){};
     public Professional(String name, String speciality, Boolean active) {

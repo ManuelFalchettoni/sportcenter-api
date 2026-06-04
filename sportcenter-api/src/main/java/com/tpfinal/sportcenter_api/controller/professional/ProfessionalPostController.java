@@ -3,11 +3,12 @@ package com.tpfinal.sportcenter_api.controller.professional;
 import com.tpfinal.sportcenter_api.dto.request.professional.ProfessionalRequest;
 import com.tpfinal.sportcenter_api.dto.response.professional.ProfessionalResponse;
 import com.tpfinal.sportcenter_api.service.professional.ProfessionalCreatorService;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
+
+import java.net.URI;
 
 @RestController
 @RequestMapping("/sportcenter/professional")
@@ -19,8 +20,12 @@ public class ProfessionalPostController {
     }
 
     @PostMapping
-    public ResponseEntity<ProfessionalResponse> create(@RequestBody ProfessionalRequest request){
+    public ResponseEntity<ProfessionalResponse> create(@RequestBody @Valid ProfessionalRequest request){
         ProfessionalResponse response = ProfessionalResponse.toResponse(professionalCreatorService.create(request));
-        return ResponseEntity.ok(response);
+        URI location = ServletUriComponentsBuilder.fromCurrentRequest()
+                .path("/{id}")
+                .buildAndExpand(response.getId())
+                .toUri();
+        return ResponseEntity.created(location).body(response);
     }
 }

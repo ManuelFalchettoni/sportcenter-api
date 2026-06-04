@@ -1,14 +1,19 @@
 package com.tpfinal.sportcenter_api.dto.request.professional;
 
 import com.tpfinal.sportcenter_api.entity.professional.Professional;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 
 public class ProfessionalRequest {
+    @NotBlank
     private String name;
+    @NotBlank
     private String speciality;
-    private boolean active;
+    @NotNull
+    private Boolean active;
 
     public ProfessionalRequest(){};
-    public ProfessionalRequest(String name, String speciality, boolean active) {
+    public ProfessionalRequest(String name, String speciality, Boolean active) {
         this.name = name;
         this.speciality = speciality;
         this.active = active;
@@ -18,7 +23,7 @@ public class ProfessionalRequest {
         return new Professional(
                 request.getName(),
                 request.getSpeciality(),
-                request.isActive()
+                request.getActive()
         );
     }
 
@@ -38,11 +43,11 @@ public class ProfessionalRequest {
         this.speciality = speciality;
     }
 
-    public boolean isActive() {
+    public Boolean getActive() {
         return active;
     }
 
-    public void setActive(boolean active) {
+    public void setActive(Boolean active) {
         this.active = active;
     }
 }
