@@ -4,7 +4,6 @@ import com.tpfinal.sportcenter_api.entity.professional.Professional;
 import com.tpfinal.sportcenter_api.entity.servicetype.ServiceType;
 import com.tpfinal.sportcenter_api.entity.user.User;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
 import java.time.LocalDateTime;
@@ -16,27 +15,22 @@ public class Appointment {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column
-    @NotBlank
-    private String clientName;
-
-    @Column
+    @Column(nullable = false)
     @NotNull
     private LocalDateTime startTime;
 
-    @Column
+    @Column(nullable = false)
     @NotNull
     private LocalDateTime endTime;
 
-    @Column
+    @Column(nullable = false)
     @NotNull
-    private Boolean confirmed;
+    private Boolean confirmed = false;
 
     @Column
-    @NotBlank
     private String notes;
 
-    @Column
+    @Column(nullable = false, updatable = false)
     @NotNull
     private LocalDateTime createdAt;
 
@@ -52,19 +46,16 @@ public class Appointment {
 
     @NotNull
     @ManyToOne
-    @JoinColumn(name = "service_type_ id", nullable = false)
+    @JoinColumn(name = "service_type_id", nullable = false)
     private ServiceType serviceType;
 
     public Appointment(){}
 
-    public Appointment(Long id, String clientName, LocalDateTime startTime, LocalDateTime endTime, Boolean confirmed, String notes, LocalDateTime createdAt, User user, Professional professional, ServiceType serviceType) {
-        this.id = id;
-        this.clientName = clientName;
+    public Appointment(LocalDateTime startTime, LocalDateTime endTime, String notes,
+                       User user, Professional professional, ServiceType serviceType) {
         this.startTime = startTime;
         this.endTime = endTime;
-        this.confirmed = confirmed;
         this.notes = notes;
-        this.createdAt = createdAt;
         this.user = user;
         this.professional = professional;
         this.serviceType = serviceType;
@@ -76,14 +67,6 @@ public class Appointment {
 
     public void setId(Long id) {
         this.id = id;
-    }
-
-    public String getClientName() {
-        return clientName;
-    }
-
-    public void setClientName(String clientName) {
-        this.clientName = clientName;
     }
 
     public LocalDateTime getStartTime() {

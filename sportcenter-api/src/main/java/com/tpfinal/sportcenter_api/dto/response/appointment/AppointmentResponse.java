@@ -1,16 +1,12 @@
-package com.tpfinal.sportcenter_api.dto.response.appointmernt;
+package com.tpfinal.sportcenter_api.dto.response.appointment;
 
 import com.tpfinal.sportcenter_api.entity.appointment.Appointment;
-import com.tpfinal.sportcenter_api.entity.professional.Professional;
-import com.tpfinal.sportcenter_api.entity.servicetype.ServiceType;
-import com.tpfinal.sportcenter_api.entity.user.User;
 
 import java.time.LocalDateTime;
 
 public class AppointmentResponse {
 
     private Long id;
-    private String clientName;
     private LocalDateTime startTime;
     private LocalDateTime endTime;
     private Boolean confirmed;
@@ -25,9 +21,10 @@ public class AppointmentResponse {
 
     public AppointmentResponse(){}
 
-    public AppointmentResponse(Long id, String clientName, LocalDateTime startTime, LocalDateTime endTime, Boolean confirmed, String notes, LocalDateTime createdAt, Long userId, String username, Long professionalId, String professionalName, Long serviceTypeId, String serviceTypeName) {
+    public AppointmentResponse(Long id, LocalDateTime startTime, LocalDateTime endTime, Boolean confirmed,
+                               String notes, LocalDateTime createdAt, Long userId, String username,
+                               Long professionalId, String professionalName, Long serviceTypeId, String serviceTypeName) {
         this.id = id;
-        this.clientName = clientName;
         this.startTime = startTime;
         this.endTime = endTime;
         this.confirmed = confirmed;
@@ -41,21 +38,12 @@ public class AppointmentResponse {
         this.serviceTypeName = serviceTypeName;
     }
 
-
     public Long getId() {
         return id;
     }
 
     public void setId(Long id) {
         this.id = id;
-    }
-
-    public String getClientName() {
-        return clientName;
-    }
-
-    public void setClientName(String clientName) {
-        this.clientName = clientName;
     }
 
     public LocalDateTime getStartTime() {
@@ -149,7 +137,6 @@ public class AppointmentResponse {
     public static AppointmentResponse toResponse(Appointment appointment){
         return new AppointmentResponse(
                 appointment.getId(),
-                appointment.getClientName(),
                 appointment.getStartTime(),
                 appointment.getEndTime(),
                 appointment.getConfirmed(),

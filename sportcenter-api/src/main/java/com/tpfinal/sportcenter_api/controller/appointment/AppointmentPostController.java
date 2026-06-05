@@ -1,9 +1,9 @@
-package com.tpfinal.sportcenter_api.controller.appointmernt;
+package com.tpfinal.sportcenter_api.controller.appointment;
 
-import com.tpfinal.sportcenter_api.dto.request.appointmernt.AppointmentRequest;
-import com.tpfinal.sportcenter_api.dto.response.appointmernt.AppointmentResponse;
+import com.tpfinal.sportcenter_api.dto.request.appointment.AppointmentRequest;
+import com.tpfinal.sportcenter_api.dto.response.appointment.AppointmentResponse;
 import com.tpfinal.sportcenter_api.entity.appointment.Appointment;
-import com.tpfinal.sportcenter_api.service.appointmernt.AppointmentCreatorService;
+import com.tpfinal.sportcenter_api.service.appointment.AppointmentCreatorService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
