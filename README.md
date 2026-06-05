@@ -31,6 +31,7 @@ Profesional que presta servicios en el centro deportivo.
 | `name`       | String  | `@NotBlank`            |
 | `speciality` | String  | `@NotBlank`            |
 | `active`     | Boolean | `@NotNull`             |
+| `services`   | Set<ServiceType> | `@ManyToMany` — servicios que ofrece (tabla `professional_service_types`) |
 
 #### Endpoints — base: `/sportcenter/professional`
 
@@ -48,9 +49,12 @@ Profesional que presta servicios en el centro deportivo.
 {
   "name": "Juan Pérez",
   "speciality": "Kinesiología",
-  "active": true
+  "active": true,
+  "serviceTypeIds": [1, 2]
 }
 ```
+
+El campo `serviceTypeIds` es opcional. Cada id debe existir en `ServiceType`; caso contrario responde `404 Not Found`. En el `Response` los servicios se devuelven como `Set<ServiceTypeResponse>` bajo el campo `services`.
 
 ---
 
@@ -84,6 +88,46 @@ Tipo de servicio que ofrece el centro (ej: sesión de kinesiología, clase de yo
   "price": 8500.00
 }
 ```
+
+---
+
+### User
+
+Usuario del sistema. La contraseña se almacena hasheada con BCrypt y nunca se devuelve en las respuestas.
+
+| Campo         | Tipo          | Restricciones                                  |
+|---------------|---------------|------------------------------------------------|
+| `id`          | Long          | PK, autogenerado                               |
+| `username`    | String        | `@NotBlank`, único                             |
+| `email`       | String        | `@NotBlank`, `@Email`, único                   |
+| `password`    | String        | `@NotBlank` — se guarda hasheado con BCrypt    |
+| `role`        | UserEnum      | `@NotNull` — `ADMIN` o `USER`                  |
+| `createdDate` | LocalDateTime | Generado por el servidor, no editable          |
+
+#### Endpoints — base: `/sportcenter/users`
+
+| Método | Path                  | Descripción                       | Respuesta                              |
+|--------|-----------------------|-----------------------------------|----------------------------------------|
+| GET    | `/{id}`               | Obtiene un usuario por id         | `200 OK` · `UserResponse`              |
+| GET    | `?page=&size=&sort=`  | Lista paginada                    | `200 OK` · `Page<UserResponse>`        |
+| POST   | `/`                   | Crea un usuario                   | `201 Created` · `UserResponse`         |
+| PUT    | `/{id}`               | Actualiza un usuario              | `200 OK` · `UserResponse`              |
+| DELETE | `/{id}`               | Elimina un usuario                | `204 No Content`                       |
+
+Si `username` o `email` ya existen, responde `409 Conflict` (`UserAlreadyExistsException`).
+
+##### Body de ejemplo (`POST` / `PUT`)
+
+```json
+{
+  "username": "manu",
+  "email": "manu@example.com",
+  "password": "secret123",
+  "role": "ADMIN"
+}
+```
+
+En el `PUT`, si `password` viene vacío o nulo, no se actualiza. `createdDate` se setea automáticamente en el `POST` y no puede modificarse.
 
 ---
 
