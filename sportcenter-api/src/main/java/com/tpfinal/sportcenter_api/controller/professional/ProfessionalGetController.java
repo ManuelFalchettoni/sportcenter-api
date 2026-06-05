@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/sportcenter/professional")
+@RequestMapping("/sportcenter/professionals")
 public class ProfessionalGetController {
     private final ProfessionalFinderService professionalFinderService;
 

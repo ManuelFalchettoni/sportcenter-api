@@ -11,7 +11,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import java.net.URI;
 
 @RestController
-@RequestMapping("/sportcenter/professional")
+@RequestMapping("/sportcenter/professionals")
 public class ProfessionalPostController {
     private final ProfessionalCreatorService professionalCreatorService;
 

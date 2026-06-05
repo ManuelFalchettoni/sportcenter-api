@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.*;
 
 
 @RestController
-@RequestMapping("/sportcenter/professional")
+@RequestMapping("/sportcenter/professionals")
 public class ProfessionalPutController {
     private final ProfessionalUpdaterService professionalUpdaterService;
 
