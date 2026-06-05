@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("sportcenter/users")
+@RequestMapping("/sportcenter/users")
 public class UserPostController {
     private final UserCreatorService userCreatorService;
 

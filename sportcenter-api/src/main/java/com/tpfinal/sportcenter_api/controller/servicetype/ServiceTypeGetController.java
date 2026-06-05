@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/sportcenter/service-type")
+@RequestMapping("/sportcenter/service-types")
 public class ServiceTypeGetController {
     private final ServiceTypeFinderService serviceTypeFinderService;
 

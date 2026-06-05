@@ -5,7 +5,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("sportcenter/users")
+@RequestMapping("/sportcenter/users")
 public class UserDeleteController {
     private final UserDeleterService userDeleterService;
 

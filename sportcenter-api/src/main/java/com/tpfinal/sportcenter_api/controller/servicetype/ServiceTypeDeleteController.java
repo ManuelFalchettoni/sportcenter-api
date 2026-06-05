@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/sportcenter/service-type")
+@RequestMapping("/sportcenter/service-types")
 public class ServiceTypeDeleteController {
     private final ServiceTypeDeleterService serviceTypeDeleterService;
 

@@ -1,7 +1,6 @@
 package com.tpfinal.sportcenter_api.service.appointment;
 
 import com.tpfinal.sportcenter_api.entity.appointment.Appointment;
-import com.tpfinal.sportcenter_api.entity.professional.Professional;
 import com.tpfinal.sportcenter_api.repository.appointment.JpaAppointmentRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;

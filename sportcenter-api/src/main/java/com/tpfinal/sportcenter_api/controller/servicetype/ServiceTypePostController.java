@@ -11,7 +11,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import java.net.URI;
 
 @RestController
-@RequestMapping("/sportcenter/service-type")
+@RequestMapping("/sportcenter/service-types")
 public class ServiceTypePostController {
     private final ServiceTypeCreatorService serviceTypeCreatorService;
 

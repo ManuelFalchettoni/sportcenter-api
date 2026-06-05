@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("sportcenter/appointments")
+@RequestMapping("/sportcenter/appointments")
 public class AppointmentGetController {
     private final AppointmentFinderService appointmentFinderService;
 
