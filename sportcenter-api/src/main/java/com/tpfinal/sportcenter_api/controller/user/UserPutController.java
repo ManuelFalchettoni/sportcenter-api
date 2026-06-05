@@ -2,7 +2,7 @@ package com.tpfinal.sportcenter_api.controller.user;
 
 import com.tpfinal.sportcenter_api.dto.request.user.UserRequest;
 import com.tpfinal.sportcenter_api.dto.response.user.UserResponse;
-import com.tpfinal.sportcenter_api.service.UserUpdaterService;
+import com.tpfinal.sportcenter_api.service.user.UserUpdaterService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -18,9 +18,8 @@ public class UserPutController {
 
     @PutMapping("/{id}")
     public ResponseEntity<UserResponse> update(@PathVariable Long id,
-                                               @Valid @RequestBody UserRequest request){
+                                               @Valid @RequestBody UserRequest request) {
         UserResponse response = userUpdaterService.update(id, request);
         return ResponseEntity.ok(response);
     }
 }
-

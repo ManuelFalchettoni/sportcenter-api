@@ -1,9 +1,8 @@
-package com.tpfinal.sportcenter_api.service;
+package com.tpfinal.sportcenter_api.service.user;
 
-import com.tpfinal.sportcenter_api.entity.User;
-import com.tpfinal.sportcenter_api.repository.JpaUserRepository;
+import com.tpfinal.sportcenter_api.entity.user.User;
+import com.tpfinal.sportcenter_api.repository.user.JpaUserRepository;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.DeleteMapping;
 
 @Service
 public class UserDeleterService {
@@ -15,7 +14,7 @@ public class UserDeleterService {
         this.userFinderService = userFinderService;
     }
 
-    public void delete(Long id){
+    public void delete(Long id) {
         User user = userFinderService.find(id);
         jpaUserRepository.delete(user);
     }

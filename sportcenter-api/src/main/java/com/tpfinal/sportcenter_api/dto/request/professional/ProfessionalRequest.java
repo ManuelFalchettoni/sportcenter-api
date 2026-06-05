@@ -4,6 +4,9 @@ import com.tpfinal.sportcenter_api.entity.professional.Professional;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
+import java.util.HashSet;
+import java.util.Set;
+
 public class ProfessionalRequest {
     @NotBlank
     private String name;
@@ -12,11 +15,14 @@ public class ProfessionalRequest {
     @NotNull
     private Boolean active;
 
+    private Set<Long> serviceTypeIds = new HashSet<>();
+
     public ProfessionalRequest(){};
-    public ProfessionalRequest(String name, String speciality, Boolean active) {
+    public ProfessionalRequest(String name, String speciality, Boolean active, Set<Long> serviceTypeIds) {
         this.name = name;
         this.speciality = speciality;
         this.active = active;
+        this.serviceTypeIds = serviceTypeIds != null ? serviceTypeIds : new HashSet<>();
     }
 
     static public Professional fromRequest (ProfessionalRequest request){
@@ -49,5 +55,13 @@ public class ProfessionalRequest {
 
     public void setActive(Boolean active) {
         this.active = active;
+    }
+
+    public Set<Long> getServiceTypeIds() {
+        return serviceTypeIds;
+    }
+
+    public void setServiceTypeIds(Set<Long> serviceTypeIds) {
+        this.serviceTypeIds = serviceTypeIds != null ? serviceTypeIds : new HashSet<>();
     }
 }
