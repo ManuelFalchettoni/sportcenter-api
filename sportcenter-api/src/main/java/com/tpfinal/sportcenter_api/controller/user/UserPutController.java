@@ -7,6 +7,10 @@ import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+/**
+ * Controlador REST que expone la actualización de usuarios.
+ * Ruta base: {@code /sportcenter/users}.
+ */
 @RestController
 @RequestMapping("/sportcenter/users")
 public class UserPutController {
@@ -16,6 +20,13 @@ public class UserPutController {
         this.userUpdaterService = userUpdaterService;
     }
 
+    /**
+     * Actualiza un usuario existente.
+     *
+     * @param id identificador del usuario a actualizar.
+     * @param request datos validados con el nuevo estado del usuario.
+     * @return 200 OK con el usuario actualizado.
+     */
     @PutMapping("/{id}")
     public ResponseEntity<UserResponse> update(@PathVariable Long id,
                                                @Valid @RequestBody UserRequest request) {

@@ -9,6 +9,10 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+/**
+ * Controlador REST que expone el listado paginado de usuarios.
+ * Ruta base: {@code /sportcenter/users}.
+ */
 @RestController
 @RequestMapping("/sportcenter/users")
 public class UserGetAllController {
@@ -18,6 +22,12 @@ public class UserGetAllController {
         this.userGetAllService = userGetAllService;
     }
 
+    /**
+     * Lista usuarios en forma paginada.
+     *
+     * @param pageable parámetros de paginación y orden.
+     * @return 200 OK con la página de usuarios mapeados a DTO.
+     */
     @GetMapping
     public ResponseEntity<Page<UserResponse>> findAll(Pageable pageable) {
         Page<UserResponse> response = userGetAllService.findAll(pageable)

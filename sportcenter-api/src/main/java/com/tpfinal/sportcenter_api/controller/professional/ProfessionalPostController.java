@@ -10,6 +10,10 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;
 
+/**
+ * Controlador REST que expone el alta de profesionales.
+ * Ruta base: {@code /sportcenter/professionals}.
+ */
 @RestController
 @RequestMapping("/sportcenter/professionals")
 public class ProfessionalPostController {
@@ -19,6 +23,14 @@ public class ProfessionalPostController {
         this.professionalCreatorService = professionalCreatorService;
     }
 
+    /**
+     * Crea un nuevo profesional.
+     * <p>
+     * La respuesta incluye el header {@code Location} apuntando al recurso creado.
+     *
+     * @param request datos validados del profesional.
+     * @return 201 Created con el profesional persistido en el cuerpo.
+     */
     @PostMapping
     public ResponseEntity<ProfessionalResponse> create(@RequestBody @Valid ProfessionalRequest request){
         ProfessionalResponse response = ProfessionalResponse.toResponse(professionalCreatorService.create(request));

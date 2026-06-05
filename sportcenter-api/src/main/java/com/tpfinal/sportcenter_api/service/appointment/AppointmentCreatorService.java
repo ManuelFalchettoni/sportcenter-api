@@ -16,6 +16,12 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 
+/**
+ * Servicio encargado de crear nuevos turnos (appointments).
+ * <p>
+ * Valida el rango horario recibido y resuelve las entidades asociadas
+ * (usuario, profesional y tipo de servicio) antes de persistir el turno.
+ */
 @Service
 public class AppointmentCreatorService {
 
@@ -34,6 +40,19 @@ public class AppointmentCreatorService {
         this.jpaServiceTypeRepository = jpaServiceTypeRepository;
     }
 
+    /**
+     * Crea y persiste un nuevo turno a partir de los datos recibidos.
+     * <p>
+     * El turno se guarda como no confirmado y con la fecha de creación
+     * establecida en el momento actual.
+     *
+     * @param request datos del turno a crear (horario, notas e IDs relacionados).
+     * @return el turno persistido con su ID generado.
+     * @throws IllegalArgumentException si {@code endTime} no es posterior a {@code startTime}.
+     * @throws com.tpfinal.sportcenter_api.exception.user.UserNotFoundException si el usuario no existe.
+     * @throws com.tpfinal.sportcenter_api.exception.professional.ProfessionalNotFoundException si el profesional no existe.
+     * @throws com.tpfinal.sportcenter_api.exception.servicetype.ServiceTypeNotFoundException si el tipo de servicio no existe.
+     */
     public Appointment create(AppointmentRequest request){
         if (!request.getEndTime().isAfter(request.getStartTime())) {
             throw new IllegalArgumentException("endTime must be after startTime");

@@ -12,6 +12,10 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+/**
+ * Controlador REST que expone el endpoint para crear nuevos turnos.
+ * Ruta base: {@code /sportcenter/appointments}.
+ */
 @RestController
 @RequestMapping("/sportcenter/appointments")
 public class AppointmentPostController {
@@ -21,6 +25,12 @@ public class AppointmentPostController {
         this.appointmentCreatorService = appointmentCreatorService;
     }
 
+    /**
+     * Crea un nuevo turno.
+     *
+     * @param request datos validados del turno a crear.
+     * @return 201 Created con el turno persistido en el cuerpo.
+     */
     @PostMapping
     public ResponseEntity<AppointmentResponse> create(@Valid @RequestBody AppointmentRequest request){
         Appointment appointment = appointmentCreatorService.create(request);

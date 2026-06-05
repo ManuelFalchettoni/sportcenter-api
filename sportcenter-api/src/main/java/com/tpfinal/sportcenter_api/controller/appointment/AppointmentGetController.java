@@ -9,6 +9,10 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+/**
+ * Controlador REST que expone la consulta de un turno por ID.
+ * Ruta base: {@code /sportcenter/appointments}.
+ */
 @RestController
 @RequestMapping("/sportcenter/appointments")
 public class AppointmentGetController {
@@ -18,6 +22,12 @@ public class AppointmentGetController {
         this.appointmentFinderService = appointmentFinderService;
     }
 
+    /**
+     * Obtiene un turno por su ID.
+     *
+     * @param id identificador del turno.
+     * @return 200 OK con el turno encontrado.
+     */
     @GetMapping("/{id}")
     public ResponseEntity<AppointmentResponse> find(@PathVariable Long id){
         Appointment appointment = appointmentFinderService.find(id);

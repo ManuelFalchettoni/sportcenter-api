@@ -9,6 +9,10 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+/**
+ * Controlador REST que expone la consulta de un usuario por ID.
+ * Ruta base: {@code /sportcenter/users}.
+ */
 @RestController
 @RequestMapping("/sportcenter/users")
 public class UserGetController {
@@ -18,6 +22,12 @@ public class UserGetController {
         this.userFinderService = userFinderService;
     }
 
+    /**
+     * Obtiene un usuario por su ID.
+     *
+     * @param id identificador del usuario.
+     * @return 200 OK con el usuario encontrado.
+     */
     @GetMapping("/{id}")
     public ResponseEntity<UserResponse> find(@PathVariable Long id) {
         User user = userFinderService.find(id);

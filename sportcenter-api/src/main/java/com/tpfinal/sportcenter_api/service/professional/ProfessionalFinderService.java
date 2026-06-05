@@ -5,6 +5,10 @@ import com.tpfinal.sportcenter_api.exception.professional.ProfessionalNotFoundEx
 import com.tpfinal.sportcenter_api.repository.professional.JpaProfessionalRepository;
 import org.springframework.stereotype.Service;
 
+/**
+ * Servicio de consulta que recupera un profesional individual por su ID.
+ * Centraliza el manejo de "no encontrado" para otros servicios.
+ */
 @Service
 public class ProfessionalFinderService {
     private final JpaProfessionalRepository jpaProfessionalRepository;
@@ -13,6 +17,14 @@ public class ProfessionalFinderService {
         this.jpaProfessionalRepository = jpaProfessionalRepository;
     }
 
+    /**
+     * Busca un profesional por su ID.
+     *
+     * @param id identificador del profesional.
+     * @return el profesional correspondiente.
+     * @throws com.tpfinal.sportcenter_api.exception.professional.ProfessionalNotFoundException
+     *         si no existe.
+     */
     public Professional find(Long id){
         Professional professional =  jpaProfessionalRepository.findById(id).orElseThrow(() -> new ProfessionalNotFoundException(id));
         return professional;

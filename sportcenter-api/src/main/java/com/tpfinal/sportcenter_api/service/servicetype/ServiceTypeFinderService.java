@@ -5,6 +5,10 @@ import com.tpfinal.sportcenter_api.exception.servicetype.ServiceTypeNotFoundExce
 import com.tpfinal.sportcenter_api.repository.servicetype.JpaServiceTypeRepository;
 import org.springframework.stereotype.Service;
 
+/**
+ * Servicio de consulta que recupera un tipo de servicio por su ID.
+ * Centraliza el manejo de "no encontrado" para otros servicios.
+ */
 @Service
 public class ServiceTypeFinderService {
     private final JpaServiceTypeRepository jpaServiceTypeRepository;
@@ -13,6 +17,14 @@ public class ServiceTypeFinderService {
         this.jpaServiceTypeRepository = jpaServiceTypeRepository;
     }
 
+    /**
+     * Busca un tipo de servicio por su ID.
+     *
+     * @param id identificador del tipo de servicio.
+     * @return el tipo de servicio correspondiente.
+     * @throws com.tpfinal.sportcenter_api.exception.servicetype.ServiceTypeNotFoundException
+     *         si no existe.
+     */
     public ServiceType find(Long id){
         ServiceType serviceType = jpaServiceTypeRepository.findById(id).orElseThrow(() -> new ServiceTypeNotFoundException(id));
         return serviceType;

@@ -4,6 +4,9 @@ import com.tpfinal.sportcenter_api.entity.servicetype.ServiceType;
 import com.tpfinal.sportcenter_api.repository.servicetype.JpaServiceTypeRepository;
 import org.springframework.stereotype.Service;
 
+/**
+ * Servicio encargado de eliminar tipos de servicio por ID.
+ */
 @Service
 public class ServiceTypeDeleterService {
     private final JpaServiceTypeRepository jpaServiceTypeRepository;
@@ -14,6 +17,13 @@ public class ServiceTypeDeleterService {
         this.serviceTypeFinderService = serviceTypeFinderService;
     }
 
+    /**
+     * Elimina el tipo de servicio con el ID indicado.
+     *
+     * @param id identificador del tipo de servicio.
+     * @throws com.tpfinal.sportcenter_api.exception.servicetype.ServiceTypeNotFoundException
+     *         si el tipo de servicio no existe.
+     */
     public void delete(Long id){
         ServiceType serviceType = serviceTypeFinderService.find(id);
         jpaServiceTypeRepository.delete(serviceType);

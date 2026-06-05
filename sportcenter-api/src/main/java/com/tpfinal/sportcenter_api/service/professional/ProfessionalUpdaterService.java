@@ -11,6 +11,12 @@ import org.springframework.stereotype.Service;
 import java.util.HashSet;
 import java.util.Set;
 
+/**
+ * Servicio encargado de actualizar profesionales existentes.
+ * <p>
+ * Reemplaza nombre, especialidad, estado activo y los tipos de servicio
+ * asociados (resueltos a partir de sus IDs).
+ */
 @Service
 public class ProfessionalUpdaterService {
     private final JpaProfessionalRepository jpaProfessionalRepository;
@@ -25,6 +31,15 @@ public class ProfessionalUpdaterService {
         this.jpaServiceTypeRepository = jpaServiceTypeRepository;
     }
 
+    /**
+     * Actualiza los datos del profesional identificado por el ID.
+     *
+     * @param request nuevos datos del profesional.
+     * @param id identificador del profesional a actualizar.
+     * @return el profesional persistido con sus cambios.
+     * @throws com.tpfinal.sportcenter_api.exception.professional.ProfessionalNotFoundException si no existe.
+     * @throws com.tpfinal.sportcenter_api.exception.servicetype.ServiceTypeNotFoundException si algún ID de servicio no existe.
+     */
     public Professional update(ProfessionalRequest request, Long id) {
         Professional professional = professionalFinderService.find(id);
         professional.setName(request.getName());

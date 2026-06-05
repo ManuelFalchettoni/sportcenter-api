@@ -16,6 +16,12 @@ import com.tpfinal.sportcenter_api.repository.user.JpaUserRepository;
 import jakarta.validation.Valid;
 import org.springframework.stereotype.Service;
 
+/**
+ * Servicio encargado de actualizar turnos existentes.
+ * <p>
+ * Reemplaza horario, notas y entidades relacionadas (usuario, profesional
+ * y tipo de servicio), validando previamente que el rango horario sea coherente.
+ */
 @Service
 public class AppointmentUpdaterService {
 
@@ -37,6 +43,18 @@ public class AppointmentUpdaterService {
         this.appointmentFinderService = appointmentFinderService;
     }
 
+    /**
+     * Actualiza los datos de un turno existente.
+     *
+     * @param id identificador del turno a actualizar.
+     * @param request nuevos datos del turno.
+     * @return DTO de respuesta con el estado actualizado del turno.
+     * @throws IllegalArgumentException si {@code endTime} no es posterior a {@code startTime}.
+     * @throws com.tpfinal.sportcenter_api.exception.appointment.AppointmentNotFoundException si el turno no existe.
+     * @throws com.tpfinal.sportcenter_api.exception.user.UserNotFoundException si el usuario no existe.
+     * @throws com.tpfinal.sportcenter_api.exception.professional.ProfessionalNotFoundException si el profesional no existe.
+     * @throws com.tpfinal.sportcenter_api.exception.servicetype.ServiceTypeNotFoundException si el tipo de servicio no existe.
+     */
     public AppointmentResponse update(Long id, @Valid AppointmentRequest request) {
         if (!request.getEndTime().isAfter(request.getStartTime())) {
             throw new IllegalArgumentException("endTime must be after startTime");

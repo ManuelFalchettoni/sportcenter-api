@@ -10,6 +10,10 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;
 
+/**
+ * Controlador REST que expone el alta de tipos de servicio.
+ * Ruta base: {@code /sportcenter/service-types}.
+ */
 @RestController
 @RequestMapping("/sportcenter/service-types")
 public class ServiceTypePostController {
@@ -19,6 +23,14 @@ public class ServiceTypePostController {
         this.serviceTypeCreatorService = serviceTypeCreatorService;
     }
 
+    /**
+     * Crea un nuevo tipo de servicio.
+     * <p>
+     * La respuesta incluye el header {@code Location} apuntando al recurso creado.
+     *
+     * @param request datos validados del tipo de servicio.
+     * @return 201 Created con el tipo de servicio persistido en el cuerpo.
+     */
     @PostMapping
     public ResponseEntity<ServiceTypeResponse> create(@RequestBody @Valid ServiceTypeRequest request){
         ServiceTypeResponse response = ServiceTypeResponse.toResponse(serviceTypeCreatorService.create(request));

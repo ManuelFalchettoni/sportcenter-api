@@ -10,6 +10,10 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+/**
+ * Controlador REST que expone el listado paginado de turnos.
+ * Ruta base: {@code /sportcenter/appointments}.
+ */
 @RestController
 @RequestMapping("/sportcenter/appointments")
 public class AppointmentGetAllController {
@@ -19,6 +23,12 @@ public class AppointmentGetAllController {
         this.appointmentGetAllService = appointmentGetAllService;
     }
 
+    /**
+     * Lista turnos en forma paginada.
+     *
+     * @param pageable parámetros de paginación y orden (resueltos por Spring).
+     * @return 200 OK con la página de turnos mapeados a DTO de respuesta.
+     */
     @GetMapping
     public ResponseEntity<Page<AppointmentResponse>> findAll(Pageable pageable) {
         Page<AppointmentResponse> response = appointmentGetAllService.findAll(pageable)

@@ -8,6 +8,10 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+/**
+ * Controlador REST que expone la consulta de un tipo de servicio por ID.
+ * Ruta base: {@code /sportcenter/service-types}.
+ */
 @RestController
 @RequestMapping("/sportcenter/service-types")
 public class ServiceTypeGetController {
@@ -16,6 +20,12 @@ public class ServiceTypeGetController {
     public ServiceTypeGetController(ServiceTypeFinderService serviceTypeFinderService) {
         this.serviceTypeFinderService = serviceTypeFinderService;
     }
+    /**
+     * Obtiene un tipo de servicio por su ID.
+     *
+     * @param id identificador del tipo de servicio.
+     * @return 200 OK con el tipo de servicio encontrado.
+     */
     @GetMapping("/{id}")
     public ResponseEntity<ServiceTypeResponse> find(@PathVariable Long id){
         ServiceTypeResponse response = ServiceTypeResponse.toResponse(serviceTypeFinderService.find(id));

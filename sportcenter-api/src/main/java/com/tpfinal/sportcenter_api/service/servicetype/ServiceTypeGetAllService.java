@@ -6,6 +6,9 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+/**
+ * Servicio que expone el listado paginado de tipos de servicio.
+ */
 @Service
 public class ServiceTypeGetAllService {
     private final JpaServiceTypeRepository jpaServiceTypeRepository;
@@ -14,6 +17,12 @@ public class ServiceTypeGetAllService {
         this.jpaServiceTypeRepository = jpaServiceTypeRepository;
     }
 
+    /**
+     * Devuelve la página de tipos de servicio solicitada.
+     *
+     * @param pageable parámetros de paginación y ordenamiento.
+     * @return página con los tipos de servicio correspondientes.
+     */
     public Page<ServiceType> findAll(Pageable pageable) {
         return jpaServiceTypeRepository.findAll(pageable);
     }

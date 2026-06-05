@@ -10,6 +10,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+/**
+ * Servicio encargado de actualizar usuarios existentes.
+ * <p>
+ * Valida unicidad de username/email cuando cambian respecto al valor actual
+ * y rehashea la contraseña solo si se provee una nueva no vacía.
+ */
 @Service
 public class UserUpdaterService {
     private final JpaUserRepository jpaUserRepository;
@@ -22,6 +28,15 @@ public class UserUpdaterService {
         this.passwordEncoder = passwordEncoder;
     }
 
+    /**
+     * Actualiza los datos del usuario identificado por el ID.
+     *
+     * @param id identificador del usuario a actualizar.
+     * @param request nuevos datos del usuario; la contraseña se actualiza solo si no es nula ni vacía.
+     * @return DTO de respuesta con el estado actualizado del usuario.
+     * @throws com.tpfinal.sportcenter_api.exception.user.UserNotFoundException si no existe.
+     * @throws UserAlreadyExistsException si el nuevo username o email ya están en uso por otro usuario.
+     */
     public UserResponse update(Long id, @Valid UserRequest request) {
         User user = userFinderService.find(id);
 

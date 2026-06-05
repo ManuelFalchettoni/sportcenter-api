@@ -4,6 +4,9 @@ import com.tpfinal.sportcenter_api.entity.user.User;
 import com.tpfinal.sportcenter_api.repository.user.JpaUserRepository;
 import org.springframework.stereotype.Service;
 
+/**
+ * Servicio encargado de eliminar usuarios por ID.
+ */
 @Service
 public class UserDeleterService {
     private final JpaUserRepository jpaUserRepository;
@@ -14,6 +17,13 @@ public class UserDeleterService {
         this.userFinderService = userFinderService;
     }
 
+    /**
+     * Elimina el usuario con el ID indicado.
+     *
+     * @param id identificador del usuario.
+     * @throws com.tpfinal.sportcenter_api.exception.user.UserNotFoundException
+     *         si el usuario no existe.
+     */
     public void delete(Long id) {
         User user = userFinderService.find(id);
         jpaUserRepository.delete(user);

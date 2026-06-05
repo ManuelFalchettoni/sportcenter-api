@@ -5,6 +5,10 @@ import com.tpfinal.sportcenter_api.entity.servicetype.ServiceType;
 import com.tpfinal.sportcenter_api.repository.servicetype.JpaServiceTypeRepository;
 import org.springframework.stereotype.Service;
 
+/**
+ * Servicio encargado de actualizar tipos de servicio existentes.
+ * Reemplaza nombre, duración y precio.
+ */
 @Service
 public class ServiceTypeUpdaterService {
     private final JpaServiceTypeRepository jpaServiceTypeRepository;
@@ -15,6 +19,15 @@ public class ServiceTypeUpdaterService {
         this.serviceTypeFinderService = serviceTypeFinderService;
     }
 
+    /**
+     * Actualiza los datos del tipo de servicio identificado por el ID.
+     *
+     * @param request nuevos datos del tipo de servicio.
+     * @param id identificador del tipo de servicio a actualizar.
+     * @return el tipo de servicio persistido con sus cambios.
+     * @throws com.tpfinal.sportcenter_api.exception.servicetype.ServiceTypeNotFoundException
+     *         si no existe.
+     */
     public ServiceType update(ServiceTypeRequest request, Long id){
         ServiceType serviceType = serviceTypeFinderService.find(id);
         serviceType.setName(request.getName());

@@ -11,6 +11,11 @@ import org.springframework.stereotype.Service;
 import java.util.HashSet;
 import java.util.Set;
 
+/**
+ * Servicio encargado de dar de alta nuevos profesionales.
+ * <p>
+ * Resuelve los tipos de servicio asociados a partir de sus IDs antes de persistir.
+ */
 @Service
 public class ProfessionalCreatorService {
     private final JpaProfessionalRepository jpaProfessionalRepository;
@@ -22,6 +27,14 @@ public class ProfessionalCreatorService {
         this.jpaServiceTypeRepository = jpaServiceTypeRepository;
     }
 
+    /**
+     * Crea y persiste un nuevo profesional con los tipos de servicio indicados.
+     *
+     * @param request datos del profesional a crear.
+     * @return el profesional persistido con su ID generado.
+     * @throws com.tpfinal.sportcenter_api.exception.servicetype.ServiceTypeNotFoundException
+     *         si alguno de los IDs de servicio no existe.
+     */
     public Professional create(ProfessionalRequest request) {
         Professional professional = ProfessionalRequest.fromRequest(request);
         professional.setServices(resolveServices(request.getServiceTypeIds()));
