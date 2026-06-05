@@ -1,4 +1,4 @@
-package com.tpfinal.sportcenter_api.entity;
+package com.tpfinal.sportcenter_api.entity.user;
 
 import com.tpfinal.sportcenter_api.Enum.user.UserEnum;
 import jakarta.persistence.*;

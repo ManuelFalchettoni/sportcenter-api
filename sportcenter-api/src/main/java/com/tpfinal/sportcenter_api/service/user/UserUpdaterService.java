@@ -1,9 +1,11 @@
-package com.tpfinal.sportcenter_api.service;
+package com.tpfinal.sportcenter_api.service.user;
 
 import com.tpfinal.sportcenter_api.dto.request.user.UserRequest;
 import com.tpfinal.sportcenter_api.dto.response.user.UserResponse;
-import com.tpfinal.sportcenter_api.entity.User;
-import com.tpfinal.sportcenter_api.repository.JpaUserRepository;
+
+import com.tpfinal.sportcenter_api.entity.user.User;
+import com.tpfinal.sportcenter_api.repository.user.JpaUserRepository;
+import com.tpfinal.sportcenter_api.service.user.UserFinderService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;

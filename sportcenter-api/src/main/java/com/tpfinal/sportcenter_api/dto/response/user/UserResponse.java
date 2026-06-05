@@ -1,7 +1,7 @@
 package com.tpfinal.sportcenter_api.dto.response.user;
 
 import com.tpfinal.sportcenter_api.Enum.user.UserEnum;
-import com.tpfinal.sportcenter_api.entity.User;
+import com.tpfinal.sportcenter_api.entity.user.User;
 
 import java.time.LocalDateTime;
 

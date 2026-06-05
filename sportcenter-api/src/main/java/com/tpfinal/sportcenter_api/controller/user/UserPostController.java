@@ -2,8 +2,8 @@ package com.tpfinal.sportcenter_api.controller.user;
 
 import com.tpfinal.sportcenter_api.dto.request.user.UserRequest;
 import com.tpfinal.sportcenter_api.dto.response.user.UserResponse;
-import com.tpfinal.sportcenter_api.entity.User;
-import com.tpfinal.sportcenter_api.service.UserCreatorService;
+import com.tpfinal.sportcenter_api.entity.user.User;
+import com.tpfinal.sportcenter_api.service.user.UserCreatorService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
