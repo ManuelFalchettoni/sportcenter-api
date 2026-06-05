@@ -17,5 +17,6 @@ public class UserDeleteController {
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         userDeleterService.delete(id);
         return ResponseEntity.noContent().build();
+
     }
 }

@@ -6,6 +6,7 @@ import com.tpfinal.sportcenter_api.entity.user.User;
 import com.tpfinal.sportcenter_api.exception.user.UserAlreadyExistsException;
 import com.tpfinal.sportcenter_api.repository.user.JpaUserRepository;
 import jakarta.validation.Valid;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
