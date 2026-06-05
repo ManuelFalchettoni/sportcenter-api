@@ -1,11 +1,10 @@
 package com.tpfinal.sportcenter_api.dto.request.user;
 
-import com.tpfinal.sportcenter_api.Enum.user.UserEnum;
+import com.tpfinal.sportcenter_api.enums.user.UserEnum;
 import com.tpfinal.sportcenter_api.entity.user.User;
+import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-
-import java.time.LocalDateTime;
 
 public class UserRequest {
 
@@ -13,6 +12,7 @@ public class UserRequest {
     private String username;
 
     @NotBlank
+    @Email
     private String email;
 
     @NotBlank
@@ -21,17 +21,13 @@ public class UserRequest {
     @NotNull
     private UserEnum role;
 
-    @NotNull
-    private LocalDateTime createdDate;
+    public UserRequest() {}
 
-    public UserRequest(){}
-
-    public UserRequest(String username, String email, String password, UserEnum role, LocalDateTime createdDate) {
+    public UserRequest(String username, String email, String password, UserEnum role) {
         this.username = username;
         this.email = email;
         this.password = password;
         this.role = role;
-        this.createdDate = createdDate;
     }
 
     public String getUsername() {
@@ -66,23 +62,12 @@ public class UserRequest {
         this.role = role;
     }
 
-    public LocalDateTime getCreatedDate() {
-        return createdDate;
-    }
-
-    public void setCreatedDate(LocalDateTime createdDate) {
-        this.createdDate = createdDate;
-    }
-
-    public static User fromRequest(UserRequest userRequest){
+    public static User fromRequest(UserRequest userRequest) {
         User user = new User();
         user.setUsername(userRequest.getUsername());
         user.setEmail(userRequest.getEmail());
         user.setPassword(userRequest.getPassword());
         user.setRole(userRequest.getRole());
-        user.setCreatedDate(userRequest.getCreatedDate());
         return user;
     }
-
-
 }

@@ -1,6 +1,6 @@
 package com.tpfinal.sportcenter_api.dto.response.user;
 
-import com.tpfinal.sportcenter_api.Enum.user.UserEnum;
+import com.tpfinal.sportcenter_api.enums.user.UserEnum;
 import com.tpfinal.sportcenter_api.entity.user.User;
 
 import java.time.LocalDateTime;
@@ -13,7 +13,7 @@ public class UserResponse {
     private UserEnum role;
     private LocalDateTime createdDate;
 
-    public UserResponse(){}
+    public UserResponse() {}
 
     public UserResponse(Long id, String username, String email, UserEnum role, LocalDateTime createdDate) {
         this.id = id;
@@ -63,7 +63,7 @@ public class UserResponse {
         this.createdDate = createdDate;
     }
 
-    public static UserResponse toResponse(User user){
+    public static UserResponse toResponse(User user) {
         return new UserResponse(
                 user.getId(),
                 user.getUsername(),

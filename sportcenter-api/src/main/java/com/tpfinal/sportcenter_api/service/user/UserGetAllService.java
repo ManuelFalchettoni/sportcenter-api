@@ -1,20 +1,20 @@
 package com.tpfinal.sportcenter_api.service.user;
 
 import com.tpfinal.sportcenter_api.entity.user.User;
-import com.tpfinal.sportcenter_api.exception.user.UserNotFoundException;
 import com.tpfinal.sportcenter_api.repository.user.JpaUserRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 @Service
-public class UserFinderService {
+public class UserGetAllService {
     private final JpaUserRepository jpaUserRepository;
 
-    public UserFinderService(JpaUserRepository jpaUserRepository) {
+    public UserGetAllService(JpaUserRepository jpaUserRepository) {
         this.jpaUserRepository = jpaUserRepository;
     }
 
-    public User find(Long id) {
-        return jpaUserRepository.findById(id)
-                .orElseThrow(() -> new UserNotFoundException(id));
+    public Page<User> findAll(Pageable pageable) {
+        return jpaUserRepository.findAll(pageable);
     }
 }
