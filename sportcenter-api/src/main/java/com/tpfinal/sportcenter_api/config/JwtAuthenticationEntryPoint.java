@@ -1,6 +1,5 @@
 package com.tpfinal.sportcenter_api.config;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.HttpStatus;
@@ -9,41 +8,39 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.stereotype.Component;
 
+import java.io.IOException;
 import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
- * Responde 401 en JSON con el mismo shape que usa {@code GlobalExceptionHandler},
- * para que los clientes reciban errores con formato consistente.
+ * Responde 401 en JSON con el mismo shape que usa {@code GlobalExceptionHandler}.
+ * Construye el body a mano para no depender de Jackson (no viene en webmvc starter).
  */
 @Component
 public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
 
-    private final ObjectMapper objectMapper;
-
-    public JwtAuthenticationEntryPoint(ObjectMapper objectMapper) {
-        this.objectMapper = objectMapper;
-    }
-
-
-    //captura los intentos de acceso de usuarios no autenticados y
-    // devolvuelve una respuesta de error personalizada en formato JSON.
+    // Captura intentos de acceso de usuarios no autenticados y devuelve JSON.
     @Override
     public void commence(HttpServletRequest request,
                          HttpServletResponse response,
-                         AuthenticationException authException) throws java.io.IOException {
+                         AuthenticationException authException) throws IOException {
         response.setStatus(HttpStatus.UNAUTHORIZED.value());
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
 
-        //Arma el cuerpo del error
-        Map<String, Object> body = new HashMap<>();
-        body.put("timestamp", LocalDateTime.now());
-        body.put("status", HttpStatus.UNAUTHORIZED.value());
-        body.put("error", HttpStatus.UNAUTHORIZED.getReasonPhrase());
-        body.put("message", authException.getMessage());
+        // Escapamos el mensaje para no romper el JSON si trae comillas o backslashes.
+        String message = escape(authException.getMessage());
 
-        // se transforma en JSON
-        objectMapper.writeValue(response.getWriter(), body);
+        String body = "{"
+                + "\"timestamp\":\"" + LocalDateTime.now() + "\","
+                + "\"status\":" + HttpStatus.UNAUTHORIZED.value() + ","
+                + "\"error\":\"" + HttpStatus.UNAUTHORIZED.getReasonPhrase() + "\","
+                + "\"message\":\"" + message + "\""
+                + "}";
+
+        response.getWriter().write(body);
+    }
+
+    private String escape(String s) {
+        if (s == null) return "";
+        return s.replace("\\", "\\\\").replace("\"", "\\\"");
     }
 }
