@@ -210,6 +210,8 @@ Para errores de validación (`@Valid` sobre el body), además se incluye un obje
 }
 ```
 
+Adicionalmente, Bean Validation está activado en los callbacks pre-persist y pre-update de Hibernate (`jakarta.persistence.validation.mode=auto`). Si alguna entidad inválida intenta persistirse por una vía que no pasó por `@Valid` en un controller (por ejemplo un seeder o job interno), se devuelve `400` con `message = "Entity validation failed"` y el mismo objeto `errors` mapeando cada propiedad violada a su mensaje.
+
 ---
 
 ## Paginación

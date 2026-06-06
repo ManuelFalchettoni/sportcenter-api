@@ -1,5 +1,7 @@
 package com.tpfinal.sportcenter_api.exception;
 
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.ConstraintViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
@@ -50,6 +52,26 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<Map<String, Object>> handleIllegalArgument(IllegalArgumentException ex) {
         Map<String, Object> body = baseBody(HttpStatus.BAD_REQUEST, ex.getMessage());
+        return ResponseEntity.badRequest().body(body);
+    }
+
+    /**
+     * Maneja {@link ConstraintViolationException} lanzadas por Hibernate cuando
+     * la validación de Bean Validation falla en los callbacks pre-persist o
+     * pre-update de una entidad (datos inválidos llegando por una vía que no
+     * pasó por {@code @Valid} en un controller).
+     *
+     * @param ex excepción capturada.
+     * @return 400 Bad Request con un mapa {propiedad, mensaje} bajo {@code errors}.
+     */
+    @ExceptionHandler(ConstraintViolationException.class)
+    public ResponseEntity<Map<String, Object>> handleConstraintViolation(ConstraintViolationException ex) {
+        Map<String, String> fieldErrors = new HashMap<>();
+        for (ConstraintViolation<?> violation : ex.getConstraintViolations()) {
+            fieldErrors.put(violation.getPropertyPath().toString(), violation.getMessage());
+        }
+        Map<String, Object> body = baseBody(HttpStatus.BAD_REQUEST, "Entity validation failed");
+        body.put("errors", fieldErrors);
         return ResponseEntity.badRequest().body(body);
     }
 
