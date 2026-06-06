@@ -16,7 +16,10 @@ public class UserRequest {
     @Size(max = 254)
     private String email;
 
-    @NotBlank
+    // Sin @NotBlank a propósito: el PUT permite omitir el campo (null) para no cambiar la clave.
+    // El POST valida la presencia explícitamente en UserCreatorService.
+    // Max = 72 por el límite real de BCrypt (trunca silenciosamente más allá de 72 bytes).
+    @Size(min = 8, max = 72)
     private String password;
 
     public UserRequest() {}

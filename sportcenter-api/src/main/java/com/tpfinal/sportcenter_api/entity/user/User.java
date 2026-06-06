@@ -27,7 +27,9 @@ public class User {
     @Size(max = 254)
     private String email;
 
-    @Column(nullable = false)
+    // Almacena el hash BCrypt (formato $2a$10$..., 60 caracteres fijos).
+    // No aplica @Size con el rango del claro: esa restricción vive en el DTO.
+    @Column(nullable = false, length = 60)
     @NotBlank
     private String password;
 

@@ -35,6 +35,11 @@ public class UserCreatorService {
      *         si ya existe un usuario con el mismo username o email.
      */
     public User create(UserRequest request) {
+        // Password es opcional en el DTO (para soportar el PUT), pero obligatoria al crear.
+        if (request.getPassword() == null || request.getPassword().isBlank()) {
+            throw new IllegalArgumentException("password must not be blank");
+        }
+
         // Normalización: trim en username y trim+lowercase en email,
         // para que la unicidad no dependa de espacios o capitalización.
         String username = request.getUsername().trim();

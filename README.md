@@ -100,7 +100,7 @@ Usuario del sistema. La contraseña se almacena hasheada con BCrypt y nunca se d
 | `id`          | Long          | PK, autogenerado                               |
 | `username`    | String        | `@NotBlank`, `@Size(3..30)`, único             |
 | `email`       | String        | `@NotBlank`, `@Email`, `@Size(max=254)`, único |
-| `password`    | String        | `@NotBlank` — se guarda hasheado con BCrypt    |
+| `password`    | String        | 8–72 chars; se guarda hasheado con BCrypt (60 chars) |
 | `role`        | UserEnum      | `ADMIN` o `USER` — fijado por el servidor, no aceptado en el body |
 | `createdDate` | LocalDateTime | Generado por el servidor, no editable          |
 
@@ -130,7 +130,7 @@ Notas:
 
 - `role` **no se acepta en el body**. Todo usuario creado vía este endpoint queda con rol `USER`. Para cambiar un rol existe (a futuro) un endpoint administrativo separado.
 - `email` se normaliza a minúsculas y `username` se trimea antes de comparar y persistir, así la unicidad no depende de capitalización ni espacios accidentales.
-- En el `PUT`, si `password` viene vacío o nulo, no se actualiza.
+- `password` debe tener entre 8 y 72 caracteres (límite superior por BCrypt, que trunca silenciosamente más allá de 72 bytes). En el `POST` es obligatoria. En el `PUT` se puede **omitir el campo** (enviarlo como `null` o no incluirlo) para no cambiar la clave; si se envía, debe respetar el rango 8–72.
 - `createdDate` se setea automáticamente en el `POST` y no puede modificarse.
 
 ---
