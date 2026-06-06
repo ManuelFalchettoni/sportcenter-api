@@ -7,6 +7,16 @@ import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
 
+/**
+ * Repositorio JPA de turnos.
+ *
+ * <p>Es una <b>interfaz sin implementación escrita a mano</b>: Spring Data, al
+ * arrancar, genera un proxy que la implementa. Los métodos de abajo son
+ * <i>derived query methods</i>: Spring arma la consulta a partir del <b>nombre</b>
+ * del método —cada palabra clave ({@code ProfessionalId}, {@code StartTimeBefore},
+ * {@code EndTimeAfter}, {@code IdNot}) se traduce en una condición del WHERE—, por
+ * eso no tienen cuerpo. El detalle de cómo se detecta el solapamiento está en el README.
+ */
 @Repository
 public interface JpaAppointmentRepository extends
         JpaRepository<Appointment, Long>,

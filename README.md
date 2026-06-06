@@ -11,11 +11,53 @@ Sistema de turnos para centro deportivo — Spring Boot REST API.
 
 ## Cómo correr
 
+> Requiere una instancia de MySQL corriendo y configurada en `src/main/resources/application.properties`.
+
 ```bash
+cd sportcenter-api
 ./mvnw spring-boot:run
 ```
 
 La aplicación queda escuchando por defecto en `http://localhost:8080`.
+
+---
+
+## Autenticación
+
+La API usa **JWT (HS256)**. El flujo típico es:
+
+1. Registrarse con `POST /sportcenter/users` (público).
+2. Hacer login en `POST /sportcenter/auth/login` para obtener un token.
+3. Mandar el token en cada request protegido en el header `Authorization: Bearer <token>`.
+
+#### `POST /sportcenter/auth/login`
+
+Body:
+
+```json
+{
+  "email": "manu@example.com",
+  "password": "secret123"
+}
+```
+
+Respuesta `200 OK`:
+
+```json
+{
+  "token": "eyJhbGciOiJIUzI1NiJ9..."
+}
+```
+
+Si el email no existe **o** la contraseña es incorrecta, responde `401 Unauthorized` con el mismo mensaje genérico (`"Invalid email or password."`). Es deliberado: no se revela si un email está registrado, para evitar la enumeración de usuarios.
+
+#### Rutas públicas vs. protegidas
+
+- **Públicas:** `/sportcenter/auth/**` (login) y el registro `POST /sportcenter/users`.
+- **Protegidas:** cualquier otra ruta requiere un token válido; sin él se responde `401 Unauthorized`.
+- **Solo ADMIN:** `PATCH /sportcenter/users/{id}/role` exige rol `ADMIN` (`@PreAuthorize("hasRole('ADMIN')")`); un usuario autenticado sin ese rol recibe `403 Forbidden`.
+
+El token lleva el `username` como subject y el rol como claim, y expira según `jwt.expiration` (1 hora por defecto). Las sesiones son *stateless*: no se guarda estado en el servidor.
 
 ---
 
@@ -144,7 +186,7 @@ Notas:
 Validaciones:
 
 - `role` es obligatorio (`@NotNull`) y debe ser uno de los valores del enum (`USER`, `ADMIN`).
-- **Endpoint pensado para administradores.** Actualmente está abierto (sin filtro por rol) porque la integración con JWT está pendiente. Cuando se incorpore Spring Security con method-level security, restringirlo con `@PreAuthorize("hasRole('ADMIN')")` o equivalente.
+- **Endpoint restringido a administradores.** Protegido con `@PreAuthorize("hasRole('ADMIN')")` (method-level security): un usuario autenticado sin rol `ADMIN` recibe `403 Forbidden`, y sin token `401 Unauthorized`.
 - `createdDate` se setea automáticamente en el `POST` y no puede modificarse.
 
 ---
@@ -192,7 +234,40 @@ Reglas:
 
 - `endTime` debe ser estrictamente posterior a `startTime`; caso contrario responde `400 Bad Request`.
 - `userId`, `professionalId` y `serviceTypeId` deben referenciar entidades existentes; caso contrario `404 Not Found`.
+- **Sin doble reserva:** un profesional no puede tener dos turnos que se solapen. Si el rango pedido pisa otro turno del mismo profesional, responde `409 Conflict` (`AppointmentOverlapException`). En el `PUT`, el propio turno que se edita no cuenta como solapamiento.
 - En el `POST`, el turno se crea con `confirmed = false` y `createdAt` se setea al momento actual.
+
+##### Cómo se detecta el solapamiento
+
+El chequeo vive en `JpaAppointmentRepository`, que es una **interfaz** sin implementación escrita a mano:
+
+```java
+boolean existsByProfessionalIdAndStartTimeBeforeAndEndTimeAfter(
+        Long professionalId, LocalDateTime endTime, LocalDateTime startTime);
+```
+
+No tiene cuerpo porque es un **derived query method** de Spring Data JPA: al arrancar, Spring genera un proxy que implementa la interfaz y, leyendo el **nombre** del método, arma la consulta. El nombre se descompone así:
+
+| Fragmento del nombre | Condición generada    |
+|----------------------|-----------------------|
+| `ProfessionalId`     | `professional.id = ?` |
+| `StartTimeBefore`    | `startTime < ?`       |
+| `EndTimeAfter`       | `endTime > ?`         |
+
+Que se traduce (en JPQL, simplificado) a:
+
+```sql
+SELECT count(a) > 0 FROM Appointment a
+WHERE a.professional.id = :professionalId
+  AND a.startTime < :endTime
+  AND a.endTime   > :startTime
+```
+
+Los parámetros se asignan **por posición**, en el orden en que aparecen en el nombre. Por eso en la llamada se pasan "cruzados": el `endTime` del turno nuevo se compara contra el `startTime` de los turnos existentes y viceversa. Dos intervalos se solapan cuando **uno empieza antes de que el otro termine y termina después de que el otro empieza**. Se usan comparaciones estrictas (`<`, `>`) a propósito: dos turnos contiguos (uno termina justo cuando el otro empieza, p. ej. `10–11` y `11–12`) **no** se consideran solapados.
+
+La variante `...AndEndTimeAfterAndIdNot(..., id)` agrega `AND a.id <> :id` y se usa al actualizar, para que un turno no choque consigo mismo.
+
+> El SQL real generado se puede ver en consola gracias a `spring.jpa.show-sql=true`.
 
 ---
 
@@ -225,6 +300,19 @@ Para errores de validación (`@Valid` sobre el body), además se incluye un obje
 ```
 
 Adicionalmente, Bean Validation está activado en los callbacks pre-persist y pre-update de Hibernate (`jakarta.persistence.validation.mode=auto`). Si alguna entidad inválida intenta persistirse por una vía que no pasó por `@Valid` en un controller (por ejemplo un seeder o job interno), se devuelve `400` con `message = "Entity validation failed"` y el mismo objeto `errors` mapeando cada propiedad violada a su mensaje.
+
+### Códigos de estado
+
+| Código | Cuándo |
+|--------|--------|
+| `400 Bad Request` | Validación del body (`@Valid`), JSON malformado, o reglas de negocio como `endTime <= startTime`. |
+| `401 Unauthorized` | Falta el token, o es inválido/expirado; o credenciales inválidas en el login. |
+| `403 Forbidden` | Autenticado pero sin permisos (p. ej. un no-ADMIN en `PATCH /{id}/role`). |
+| `404 Not Found` | Recurso inexistente (usuario, profesional, service type o turno). |
+| `409 Conflict` | `username`/`email` duplicado, o turno solapado. |
+| `500 Internal Server Error` | Error inesperado; el detalle se loguea en el servidor y **no** se expone al cliente. |
+
+Todos comparten el mismo formato de body de arriba. `GlobalExceptionHandler` es la única fuente de verdad: por eso las excepciones de dominio no usan `@ResponseStatus`.
 
 ---
 
