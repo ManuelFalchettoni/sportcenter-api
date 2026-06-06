@@ -2,6 +2,7 @@ package com.tpfinal.sportcenter_api.dto.request.appointment;
 
 import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 
 import java.time.LocalDateTime;
 
@@ -15,6 +16,7 @@ public class AppointmentRequest {
     @Future
     private LocalDateTime endTime;
 
+    @Size(max = 500)
     private String notes;
 
     @NotNull

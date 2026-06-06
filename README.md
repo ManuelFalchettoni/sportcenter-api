@@ -144,7 +144,7 @@ Turno reservado entre un usuario y un profesional para un tipo de servicio deter
 | `startTime`    | LocalDateTime | `@NotNull`, `@Future`                                        |
 | `endTime`      | LocalDateTime | `@NotNull`, `@Future` — debe ser posterior a `startTime`     |
 | `confirmed`    | Boolean       | Se inicializa en `false` al crear el turno                   |
-| `notes`        | String        | Opcional                                                     |
+| `notes`        | String        | Opcional, `@Size(max = 500)`                                 |
 | `createdAt`    | LocalDateTime | Generado por el servidor, no editable                        |
 | `user`         | User          | `@ManyToOne`, requerido — referenciado por `userId`          |
 | `professional` | Professional  | `@ManyToOne`, requerido — referenciado por `professionalId`  |

@@ -5,6 +5,7 @@ import com.tpfinal.sportcenter_api.entity.servicetype.ServiceType;
 import com.tpfinal.sportcenter_api.entity.user.User;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 
 import java.time.LocalDateTime;
 
@@ -27,7 +28,8 @@ public class Appointment {
     @NotNull
     private Boolean confirmed = false;
 
-    @Column
+    @Column(length = 500)
+    @Size(max = 500)
     private String notes;
 
     @Column(nullable = false, updatable = false)
