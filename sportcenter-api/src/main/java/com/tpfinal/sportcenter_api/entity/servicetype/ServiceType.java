@@ -1,6 +1,7 @@
 package com.tpfinal.sportcenter_api.entity.servicetype;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
@@ -19,16 +20,18 @@ public class ServiceType {
     @Size(min = 3, max = 80)
     @Column(nullable = false, length = 80)
     private String name;
+    @NotNull
     @Positive
+    @Max(480)
     @Column(nullable = false)
-    private int durationMinutes;
+    private Integer durationMinutes;
     @NotNull
     @PositiveOrZero
     @Column(nullable = false)
     private BigDecimal price;
 
     public ServiceType(){};
-    public ServiceType(String name, int durationMinutes, BigDecimal price) {
+    public ServiceType(String name, Integer durationMinutes, BigDecimal price) {
         this.name = name;
         this.durationMinutes = durationMinutes;
         this.price = price;
@@ -50,11 +53,11 @@ public class ServiceType {
         this.name = name;
     }
 
-    public int getDurationMinutes() {
+    public Integer getDurationMinutes() {
         return durationMinutes;
     }
 
-    public void setDurationMinutes(int durationMinutes) {
+    public void setDurationMinutes(Integer durationMinutes) {
         this.durationMinutes = durationMinutes;
     }
 

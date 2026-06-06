@@ -1,6 +1,7 @@
 package com.tpfinal.sportcenter_api.dto.request.servicetype;
 
 import com.tpfinal.sportcenter_api.entity.servicetype.ServiceType;
+import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
@@ -13,14 +14,16 @@ public class ServiceTypeRequest {
     @NotBlank
     @Size(min = 3, max = 80)
     private String name;
+    @NotNull
     @Positive
-    private int durationMinutes;
+    @Max(480)
+    private Integer durationMinutes;
     @NotNull
     @PositiveOrZero
     private BigDecimal price;
 
     public ServiceTypeRequest(){};
-    public ServiceTypeRequest(String name, int durationMinutes, BigDecimal price) {
+    public ServiceTypeRequest(String name, Integer durationMinutes, BigDecimal price) {
         this.name = name;
         this.durationMinutes = durationMinutes;
         this.price = price;
@@ -42,11 +45,11 @@ public class ServiceTypeRequest {
         this.name = name;
     }
 
-    public int getDurationMinutes() {
+    public Integer getDurationMinutes() {
         return durationMinutes;
     }
 
-    public void setDurationMinutes(int durationMinutes) {
+    public void setDurationMinutes(Integer durationMinutes) {
         this.durationMinutes = durationMinutes;
     }
 
