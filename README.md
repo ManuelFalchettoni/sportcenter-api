@@ -112,6 +112,7 @@ Usuario del sistema. La contraseña se almacena hasheada con BCrypt y nunca se d
 | GET    | `?page=&size=&sort=`  | Lista paginada                    | `200 OK` · `Page<UserResponse>`        |
 | POST   | `/`                   | Crea un usuario                   | `201 Created` · `UserResponse`         |
 | PUT    | `/{id}`               | Actualiza un usuario              | `200 OK` · `UserResponse`              |
+| PATCH  | `/{id}/role`          | **Admin**: cambia el rol          | `200 OK` · `UserResponse`              |
 | DELETE | `/{id}`               | Elimina un usuario                | `204 No Content`                       |
 
 Si `username` o `email` ya existen, responde `409 Conflict` (`UserAlreadyExistsException`).
@@ -128,9 +129,22 @@ Si `username` o `email` ya existen, responde `409 Conflict` (`UserAlreadyExistsE
 
 Notas:
 
-- `role` **no se acepta en el body**. Todo usuario creado vía este endpoint queda con rol `USER`. Para cambiar un rol existe (a futuro) un endpoint administrativo separado.
+- `role` **no se acepta en el body** del `POST` ni del `PUT`. Todo usuario creado por esos endpoints queda con rol `USER`. El rol se modifica exclusivamente vía `PATCH /sportcenter/users/{id}/role` (ver más abajo), que en producción debe quedar restringido a administradores.
 - `email` se normaliza a minúsculas y `username` se trimea antes de comparar y persistir, así la unicidad no depende de capitalización ni espacios accidentales.
 - `password` debe tener entre 8 y 72 caracteres (límite superior por BCrypt, que trunca silenciosamente más allá de 72 bytes). En el `POST` es obligatoria. En el `PUT` se puede **omitir el campo** (enviarlo como `null` o no incluirlo) para no cambiar la clave; si se envía, debe respetar el rango 8–72.
+
+##### Body de ejemplo (`PATCH /{id}/role`)
+
+```json
+{
+  "role": "ADMIN"
+}
+```
+
+Validaciones:
+
+- `role` es obligatorio (`@NotNull`) y debe ser uno de los valores del enum (`USER`, `ADMIN`).
+- **Endpoint pensado para administradores.** Actualmente está abierto (sin filtro por rol) porque la integración con JWT está pendiente. Cuando se incorpore Spring Security con method-level security, restringirlo con `@PreAuthorize("hasRole('ADMIN')")` o equivalente.
 - `createdDate` se setea automáticamente en el `POST` y no puede modificarse.
 
 ---
