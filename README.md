@@ -33,7 +33,7 @@ Profesional que presta servicios en el centro deportivo.
 | `active`     | Boolean | `@NotNull`             |
 | `services`   | Set<ServiceType> | `@ManyToMany` — servicios que ofrece (tabla `professional_service_types`) |
 
-#### Endpoints — base: `/sportcenter/professional`
+#### Endpoints — base: `/sportcenter/professionals`
 
 | Método | Path                  | Descripción                       | Respuesta                      |
 |--------|-----------------------|-----------------------------------|--------------------------------|
@@ -69,7 +69,7 @@ Tipo de servicio que ofrece el centro (ej: sesión de kinesiología, clase de yo
 | `durationMinutes` | int        | `@Positive`                  |
 | `price`           | BigDecimal | `@NotNull`, `@PositiveOrZero` |
 
-#### Endpoints — base: `/sportcenter/service-type`
+#### Endpoints — base: `/sportcenter/service-types`
 
 | Método | Path                  | Descripción                       | Respuesta                      |
 |--------|-----------------------|-----------------------------------|--------------------------------|
@@ -131,6 +131,83 @@ En el `PUT`, si `password` viene vacío o nulo, no se actualiza. `createdDate` s
 
 ---
 
+### Appointment
+
+Turno reservado entre un usuario y un profesional para un tipo de servicio determinado.
+
+| Campo          | Tipo          | Restricciones                                                |
+|----------------|---------------|--------------------------------------------------------------|
+| `id`           | Long          | PK, autogenerado                                             |
+| `startTime`    | LocalDateTime | `@NotNull`, `@Future`                                        |
+| `endTime`      | LocalDateTime | `@NotNull`, `@Future` — debe ser posterior a `startTime`     |
+| `confirmed`    | Boolean       | Se inicializa en `false` al crear el turno                   |
+| `notes`        | String        | Opcional                                                     |
+| `createdAt`    | LocalDateTime | Generado por el servidor, no editable                        |
+| `user`         | User          | `@ManyToOne`, requerido — referenciado por `userId`          |
+| `professional` | Professional  | `@ManyToOne`, requerido — referenciado por `professionalId`  |
+| `serviceType`  | ServiceType   | `@ManyToOne`, requerido — referenciado por `serviceTypeId`   |
+
+#### Endpoints — base: `/sportcenter/appointments`
+
+| Método | Path                  | Descripción                       | Respuesta                              |
+|--------|-----------------------|-----------------------------------|----------------------------------------|
+| GET    | `/{id}`               | Obtiene un turno por id           | `200 OK` · `AppointmentResponse`       |
+| GET    | `?page=&size=&sort=`  | Lista paginada                    | `200 OK` · `Page<AppointmentResponse>` |
+| POST   | `/`                   | Crea un turno                     | `201 Created` · `AppointmentResponse`  |
+| PUT    | `/{id}`               | Actualiza un turno                | `200 OK` · `AppointmentResponse`       |
+| DELETE | `/{id}`               | Elimina un turno                  | `204 No Content`                       |
+
+##### Body de ejemplo (`POST` / `PUT`)
+
+```json
+{
+  "startTime": "2026-07-10T10:00:00",
+  "endTime": "2026-07-10T10:45:00",
+  "notes": "Primera sesión",
+  "userId": 1,
+  "professionalId": 2,
+  "serviceTypeId": 3
+}
+```
+
+Reglas:
+
+- `endTime` debe ser estrictamente posterior a `startTime`; caso contrario responde `400 Bad Request`.
+- `userId`, `professionalId` y `serviceTypeId` deben referenciar entidades existentes; caso contrario `404 Not Found`.
+- En el `POST`, el turno se crea con `confirmed = false` y `createdAt` se setea al momento actual.
+
+---
+
+## Manejo de errores
+
+Todas las respuestas de error siguen un formato JSON uniforme provisto por `GlobalExceptionHandler`:
+
+```json
+{
+  "timestamp": "2026-06-05T10:30:00",
+  "status": 400,
+  "error": "Bad Request",
+  "message": "endTime must be after startTime"
+}
+```
+
+Para errores de validación (`@Valid` sobre el body), además se incluye un objeto `errors` con el detalle por campo:
+
+```json
+{
+  "timestamp": "2026-06-05T10:30:00",
+  "status": 400,
+  "error": "Bad Request",
+  "message": "Validation failed",
+  "errors": {
+    "email": "must be a well-formed email address",
+    "password": "must not be blank"
+  }
+}
+```
+
+---
+
 ## Paginación
 
 Los endpoints `GET` (listado) aceptan los query params estándar de Spring Data:
@@ -142,7 +219,7 @@ Los endpoints `GET` (listado) aceptan los query params estándar de Spring Data:
 Ejemplo:
 
 ```
-GET /sportcenter/service-type?page=0&size=10&sort=price,desc
+GET /sportcenter/service-types?page=0&size=10&sort=price,desc
 ```
 
 ## Estructura del proyecto
