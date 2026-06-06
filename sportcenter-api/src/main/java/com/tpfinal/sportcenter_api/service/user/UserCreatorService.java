@@ -2,6 +2,7 @@ package com.tpfinal.sportcenter_api.service.user;
 
 import com.tpfinal.sportcenter_api.dto.request.user.UserRequest;
 import com.tpfinal.sportcenter_api.entity.user.User;
+import com.tpfinal.sportcenter_api.enums.user.UserEnum;
 import com.tpfinal.sportcenter_api.exception.user.UserAlreadyExistsException;
 import com.tpfinal.sportcenter_api.repository.user.JpaUserRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -42,6 +43,9 @@ public class UserCreatorService {
         }
         User user = UserRequest.fromRequest(request);
         user.setPassword(passwordEncoder.encode(request.getPassword()));
+        // El rol nunca se acepta desde el body para evitar auto-escalada de privilegios:
+        // todo registro queda como USER. Cambios de rol se harán por un endpoint admin.
+        user.setRole(UserEnum.USER);
         user.setCreatedDate(LocalDateTime.now());
         return jpaUserRepository.save(user);
     }

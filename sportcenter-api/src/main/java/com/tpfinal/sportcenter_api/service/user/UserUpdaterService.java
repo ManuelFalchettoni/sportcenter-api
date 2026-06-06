@@ -51,7 +51,8 @@ public class UserUpdaterService {
 
         user.setUsername(request.getUsername());
         user.setEmail(request.getEmail());
-        user.setRole(request.getRole());
+        // El rol no se actualiza desde este endpoint: se mantiene el valor actual.
+        // Cualquier cambio de rol debe hacerse por un endpoint admin separado.
 
         if (request.getPassword() != null && !request.getPassword().isBlank()) {
             user.setPassword(passwordEncoder.encode(request.getPassword()));

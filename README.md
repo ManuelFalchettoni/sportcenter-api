@@ -101,7 +101,7 @@ Usuario del sistema. La contraseña se almacena hasheada con BCrypt y nunca se d
 | `username`    | String        | `@NotBlank`, único                             |
 | `email`       | String        | `@NotBlank`, `@Email`, único                   |
 | `password`    | String        | `@NotBlank` — se guarda hasheado con BCrypt    |
-| `role`        | UserEnum      | `@NotNull` — `ADMIN` o `USER`                  |
+| `role`        | UserEnum      | `ADMIN` o `USER` — fijado por el servidor, no aceptado en el body |
 | `createdDate` | LocalDateTime | Generado por el servidor, no editable          |
 
 #### Endpoints — base: `/sportcenter/users`
@@ -122,12 +122,15 @@ Si `username` o `email` ya existen, responde `409 Conflict` (`UserAlreadyExistsE
 {
   "username": "manu",
   "email": "manu@example.com",
-  "password": "secret123",
-  "role": "ADMIN"
+  "password": "secret123"
 }
 ```
 
-En el `PUT`, si `password` viene vacío o nulo, no se actualiza. `createdDate` se setea automáticamente en el `POST` y no puede modificarse.
+Notas:
+
+- `role` **no se acepta en el body**. Todo usuario creado vía este endpoint queda con rol `USER`. Para cambiar un rol existe (a futuro) un endpoint administrativo separado.
+- En el `PUT`, si `password` viene vacío o nulo, no se actualiza.
+- `createdDate` se setea automáticamente en el `POST` y no puede modificarse.
 
 ---
 
