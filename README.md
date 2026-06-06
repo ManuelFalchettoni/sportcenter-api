@@ -15,7 +15,7 @@ Sistema de turnos para centro deportivo — Spring Boot REST API.
 ./mvnw spring-boot:run
 ```
 
-La aplicación queda escuchando en `http://localhost:8080`.
+La aplicación queda escuchando por defecto en `http://localhost:8080`.
 
 ---
 
