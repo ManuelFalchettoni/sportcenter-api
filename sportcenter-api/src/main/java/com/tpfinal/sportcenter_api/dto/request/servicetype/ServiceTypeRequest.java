@@ -1,6 +1,7 @@
 package com.tpfinal.sportcenter_api.dto.request.servicetype;
 
 import com.tpfinal.sportcenter_api.entity.servicetype.ServiceType;
+import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -20,6 +21,7 @@ public class ServiceTypeRequest {
     private Integer durationMinutes;
     @NotNull
     @PositiveOrZero
+    @Digits(integer = 8, fraction = 2)
     private BigDecimal price;
 
     public ServiceTypeRequest(){};

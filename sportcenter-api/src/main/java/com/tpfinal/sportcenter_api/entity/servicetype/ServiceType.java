@@ -1,6 +1,7 @@
 package com.tpfinal.sportcenter_api.entity.servicetype;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -27,7 +28,8 @@ public class ServiceType {
     private Integer durationMinutes;
     @NotNull
     @PositiveOrZero
-    @Column(nullable = false)
+    @Digits(integer = 8, fraction = 2)
+    @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal price;
 
     public ServiceType(){};

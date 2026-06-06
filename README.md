@@ -67,7 +67,7 @@ Tipo de servicio que ofrece el centro (ej: sesión de kinesiología, clase de yo
 | `id`              | Long       | PK, autogenerado             |
 | `name`            | String     | `@NotBlank`, `@Size(3..80)`  |
 | `durationMinutes` | Integer    | `@NotNull`, `@Positive`, `@Max(480)` |
-| `price`           | BigDecimal | `@NotNull`, `@PositiveOrZero` |
+| `price`           | BigDecimal | `@NotNull`, `@PositiveOrZero`, `@Digits(integer=8, fraction=2)` — columna `DECIMAL(10,2)` |
 
 #### Endpoints — base: `/sportcenter/service-types`
 
