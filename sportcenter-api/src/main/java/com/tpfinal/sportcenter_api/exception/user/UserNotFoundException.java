@@ -1,9 +1,7 @@
 package com.tpfinal.sportcenter_api.exception.user;
 
-import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.ResponseStatus;
-
-@ResponseStatus(HttpStatus.NOT_FOUND)
+// El status (404) y el body los asigna GlobalExceptionHandler, que es la única
+// fuente de verdad del manejo de errores. Por eso no lleva @ResponseStatus.
 public class UserNotFoundException extends RuntimeException {
 
     public UserNotFoundException(Long id) {

@@ -6,6 +6,7 @@ import com.tpfinal.sportcenter_api.entity.appointment.Appointment;
 import com.tpfinal.sportcenter_api.entity.professional.Professional;
 import com.tpfinal.sportcenter_api.entity.servicetype.ServiceType;
 import com.tpfinal.sportcenter_api.entity.user.User;
+import com.tpfinal.sportcenter_api.exception.appointment.AppointmentOverlapException;
 import com.tpfinal.sportcenter_api.exception.professional.ProfessionalNotFoundException;
 import com.tpfinal.sportcenter_api.exception.servicetype.ServiceTypeNotFoundException;
 import com.tpfinal.sportcenter_api.exception.user.UserNotFoundException;
@@ -54,6 +55,7 @@ public class AppointmentUpdaterService {
      * @throws com.tpfinal.sportcenter_api.exception.user.UserNotFoundException si el usuario no existe.
      * @throws com.tpfinal.sportcenter_api.exception.professional.ProfessionalNotFoundException si el profesional no existe.
      * @throws com.tpfinal.sportcenter_api.exception.servicetype.ServiceTypeNotFoundException si el tipo de servicio no existe.
+     * @throws com.tpfinal.sportcenter_api.exception.appointment.AppointmentOverlapException si el profesional ya tiene otro turno que se solapa con el rango pedido.
      */
     public AppointmentResponse update(Long id, @Valid AppointmentRequest request) {
         if (!request.getEndTime().isAfter(request.getStartTime())) {
@@ -68,6 +70,13 @@ public class AppointmentUpdaterService {
                 .orElseThrow(() -> new ProfessionalNotFoundException(request.getProfessionalId()));
         ServiceType serviceType = jpaServiceTypeRepository.findById(request.getServiceTypeId())
                 .orElseThrow(() -> new ServiceTypeNotFoundException(request.getServiceTypeId()));
+
+        // Misma protección de doble reserva que en la creación, pero excluyendo
+        // este mismo turno (si solo cambian las notas, no debe chocar consigo mismo).
+        if (jpaAppointmentRepository.existsByProfessionalIdAndStartTimeBeforeAndEndTimeAfterAndIdNot(
+                request.getProfessionalId(), request.getEndTime(), request.getStartTime(), id)) {
+            throw new AppointmentOverlapException(request.getProfessionalId());
+        }
 
         appointment.setStartTime(request.getStartTime());
         appointment.setEndTime(request.getEndTime());

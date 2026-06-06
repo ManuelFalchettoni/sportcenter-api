@@ -5,6 +5,7 @@ import com.tpfinal.sportcenter_api.entity.appointment.Appointment;
 import com.tpfinal.sportcenter_api.entity.professional.Professional;
 import com.tpfinal.sportcenter_api.entity.servicetype.ServiceType;
 import com.tpfinal.sportcenter_api.entity.user.User;
+import com.tpfinal.sportcenter_api.exception.appointment.AppointmentOverlapException;
 import com.tpfinal.sportcenter_api.exception.professional.ProfessionalNotFoundException;
 import com.tpfinal.sportcenter_api.exception.servicetype.ServiceTypeNotFoundException;
 import com.tpfinal.sportcenter_api.exception.user.UserNotFoundException;
@@ -49,9 +50,10 @@ public class AppointmentCreatorService {
      * @param request datos del turno a crear (horario, notas e IDs relacionados).
      * @return el turno persistido con su ID generado.
      * @throws IllegalArgumentException si {@code endTime} no es posterior a {@code startTime}.
-     * @throws com.tpfinal.sportcenter_api.exception.user.UserNotFoundException si el usuario no existe.
-     * @throws com.tpfinal.sportcenter_api.exception.professional.ProfessionalNotFoundException si el profesional no existe.
-     * @throws com.tpfinal.sportcenter_api.exception.servicetype.ServiceTypeNotFoundException si el tipo de servicio no existe.
+     * @throws UserNotFoundException si el usuario no existe.
+     * @throws ProfessionalNotFoundException si el profesional no existe.
+     * @throws ServiceTypeNotFoundException si el tipo de servicio no existe.
+     * @throws AppointmentOverlapException si el profesional ya tiene un turno que se solapa con el rango pedido.
      */
     public Appointment create(AppointmentRequest request){
         if (!request.getEndTime().isAfter(request.getStartTime())) {
@@ -64,6 +66,13 @@ public class AppointmentCreatorService {
                 .orElseThrow(() -> new ProfessionalNotFoundException(request.getProfessionalId()));
         ServiceType serviceType = jpaServiceTypeRepository.findById(request.getServiceTypeId())
                 .orElseThrow(() -> new ServiceTypeNotFoundException(request.getServiceTypeId()));
+
+        // Evitamos la doble reserva: si el profesional ya tiene un turno que se
+        // solapa con el rango pedido, no permitimos crear otro.
+        if (jpaAppointmentRepository.existsByProfessionalIdAndStartTimeBeforeAndEndTimeAfter(
+                request.getProfessionalId(), request.getEndTime(), request.getStartTime())) {
+            throw new AppointmentOverlapException(request.getProfessionalId());
+        }
 
         Appointment appointment = new Appointment(
                 request.getStartTime(),
