@@ -3,12 +3,15 @@ package com.tpfinal.sportcenter_api.dto.request.user;
 import com.tpfinal.sportcenter_api.entity.user.User;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
 public class UserRequest {
 
     @NotBlank
     @Size(min = 3, max = 30)
+    @Pattern(regexp = "^[a-zA-Z0-9._-]+$",
+            message = "username may only contain letters, digits, dot, underscore or hyphen")
     private String username;
 
     @NotBlank

@@ -98,7 +98,7 @@ Usuario del sistema. La contraseña se almacena hasheada con BCrypt y nunca se d
 | Campo         | Tipo          | Restricciones                                  |
 |---------------|---------------|------------------------------------------------|
 | `id`          | Long          | PK, autogenerado                               |
-| `username`    | String        | `@NotBlank`, `@Size(3..30)`, único             |
+| `username`    | String        | `@NotBlank`, `@Size(3..30)`, `@Pattern` (letras, dígitos, `.`, `_`, `-`), único |
 | `email`       | String        | `@NotBlank`, `@Email`, `@Size(max=254)`, único |
 | `password`    | String        | 8–72 chars; se guarda hasheado con BCrypt (60 chars) |
 | `role`        | UserEnum      | `ADMIN` o `USER` — fijado por el servidor, no aceptado en el body |
