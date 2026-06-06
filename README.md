@@ -54,7 +54,7 @@ Profesional que presta servicios en el centro deportivo.
 }
 ```
 
-El campo `serviceTypeIds` es opcional. Cada id debe existir en `ServiceType`; caso contrario responde `404 Not Found`. En el `Response` los servicios se devuelven como `Set<ServiceTypeResponse>` bajo el campo `services`.
+El campo `serviceTypeIds` es opcional. Cada id debe ser un Long positivo no nulo (`@Positive`, `@NotNull`) y existir en `ServiceType` (sino `404 Not Found`). Se permite un máximo de 50 ids por request. En el `Response` los servicios se devuelven como `Set<ServiceTypeResponse>` bajo el campo `services`.
 
 ---
 
@@ -147,9 +147,9 @@ Turno reservado entre un usuario y un profesional para un tipo de servicio deter
 | `confirmed`    | Boolean       | Se inicializa en `false` al crear el turno                   |
 | `notes`        | String        | Opcional, `@Size(max = 500)`                                 |
 | `createdAt`    | LocalDateTime | Generado por el servidor, no editable                        |
-| `user`         | User          | `@ManyToOne`, requerido — referenciado por `userId`          |
-| `professional` | Professional  | `@ManyToOne`, requerido — referenciado por `professionalId`  |
-| `serviceType`  | ServiceType   | `@ManyToOne`, requerido — referenciado por `serviceTypeId`   |
+| `user`         | User          | `@ManyToOne`, requerido — `userId` `@NotNull` `@Positive`         |
+| `professional` | Professional  | `@ManyToOne`, requerido — `professionalId` `@NotNull` `@Positive` |
+| `serviceType`  | ServiceType   | `@ManyToOne`, requerido — `serviceTypeId` `@NotNull` `@Positive`  |
 
 #### Endpoints — base: `/sportcenter/appointments`
 

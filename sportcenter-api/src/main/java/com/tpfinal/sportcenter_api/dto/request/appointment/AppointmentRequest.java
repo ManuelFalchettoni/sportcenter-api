@@ -2,6 +2,7 @@ package com.tpfinal.sportcenter_api.dto.request.appointment;
 
 import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 
 import java.time.LocalDateTime;
@@ -20,12 +21,15 @@ public class AppointmentRequest {
     private String notes;
 
     @NotNull
+    @Positive
     private Long userId;
 
     @NotNull
+    @Positive
     private Long professionalId;
 
     @NotNull
+    @Positive
     private Long serviceTypeId;
 
     public AppointmentRequest(){}

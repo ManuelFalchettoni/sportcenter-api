@@ -3,6 +3,7 @@ package com.tpfinal.sportcenter_api.dto.request.professional;
 import com.tpfinal.sportcenter_api.entity.professional.Professional;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 
 import java.util.HashSet;
@@ -18,7 +19,10 @@ public class ProfessionalRequest {
     @NotNull
     private Boolean active;
 
-    private Set<Long> serviceTypeIds = new HashSet<>();
+    // Cada ID debe ser positivo y no nulo. Capear a 50 evita payloads abusivos
+    // (un profesional con cientos de servicios distintos no tiene sentido funcional).
+    @Size(max = 50)
+    private Set<@NotNull @Positive Long> serviceTypeIds = new HashSet<>();
 
     public ProfessionalRequest(){};
     public ProfessionalRequest(String name, String speciality, Boolean active, Set<Long> serviceTypeIds) {
