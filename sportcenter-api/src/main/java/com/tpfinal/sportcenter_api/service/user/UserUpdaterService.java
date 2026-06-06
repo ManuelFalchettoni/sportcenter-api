@@ -40,17 +40,22 @@ public class UserUpdaterService {
     public UserResponse update(Long id, @Valid UserRequest request) {
         User user = userFinderService.find(id);
 
-        if (!user.getUsername().equals(request.getUsername())
-                && jpaUserRepository.existsByUsername(request.getUsername())) {
-            throw new UserAlreadyExistsException("username", request.getUsername());
+        // Normalización: trim en username y trim+lowercase en email,
+        // para que la unicidad y comparación sean consistentes.
+        String username = request.getUsername().trim();
+        String email = request.getEmail().trim().toLowerCase();
+
+        if (!user.getUsername().equals(username)
+                && jpaUserRepository.existsByUsername(username)) {
+            throw new UserAlreadyExistsException("username", username);
         }
-        if (!user.getEmail().equals(request.getEmail())
-                && jpaUserRepository.existsByEmail(request.getEmail())) {
-            throw new UserAlreadyExistsException("email", request.getEmail());
+        if (!user.getEmail().equals(email)
+                && jpaUserRepository.existsByEmail(email)) {
+            throw new UserAlreadyExistsException("email", email);
         }
 
-        user.setUsername(request.getUsername());
-        user.setEmail(request.getEmail());
+        user.setUsername(username);
+        user.setEmail(email);
         // El rol no se actualiza desde este endpoint: se mantiene el valor actual.
         // Cualquier cambio de rol debe hacerse por un endpoint admin separado.
 

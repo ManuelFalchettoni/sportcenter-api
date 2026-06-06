@@ -23,7 +23,7 @@ public class User {
 
     @Column(nullable = false, unique = true, length = 254)
     @NotBlank
-    @Email
+    @Email(regexp = "^[A-Za-z0-9._%+\\-]+@[A-Za-z0-9.\\-]+\\.[A-Za-z]{2,}$")
     @Size(max = 254)
     private String email;
 

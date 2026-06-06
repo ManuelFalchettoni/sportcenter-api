@@ -35,13 +35,20 @@ public class UserCreatorService {
      *         si ya existe un usuario con el mismo username o email.
      */
     public User create(UserRequest request) {
-        if (jpaUserRepository.existsByUsername(request.getUsername())) {
-            throw new UserAlreadyExistsException("username", request.getUsername());
+        // Normalización: trim en username y trim+lowercase en email,
+        // para que la unicidad no dependa de espacios o capitalización.
+        String username = request.getUsername().trim();
+        String email = request.getEmail().trim().toLowerCase();
+
+        if (jpaUserRepository.existsByUsername(username)) {
+            throw new UserAlreadyExistsException("username", username);
         }
-        if (jpaUserRepository.existsByEmail(request.getEmail())) {
-            throw new UserAlreadyExistsException("email", request.getEmail());
+        if (jpaUserRepository.existsByEmail(email)) {
+            throw new UserAlreadyExistsException("email", email);
         }
         User user = UserRequest.fromRequest(request);
+        user.setUsername(username);
+        user.setEmail(email);
         user.setPassword(passwordEncoder.encode(request.getPassword()));
         // El rol nunca se acepta desde el body para evitar auto-escalada de privilegios:
         // todo registro queda como USER. Cambios de rol se harán por un endpoint admin.

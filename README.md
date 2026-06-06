@@ -129,6 +129,7 @@ Si `username` o `email` ya existen, responde `409 Conflict` (`UserAlreadyExistsE
 Notas:
 
 - `role` **no se acepta en el body**. Todo usuario creado vía este endpoint queda con rol `USER`. Para cambiar un rol existe (a futuro) un endpoint administrativo separado.
+- `email` se normaliza a minúsculas y `username` se trimea antes de comparar y persistir, así la unicidad no depende de capitalización ni espacios accidentales.
 - En el `PUT`, si `password` viene vacío o nulo, no se actualiza.
 - `createdDate` se setea automáticamente en el `POST` y no puede modificarse.
 
