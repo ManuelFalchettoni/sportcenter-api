@@ -4,6 +4,7 @@ import com.tpfinal.sportcenter_api.entity.servicetype.ServiceType;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -15,10 +16,12 @@ public class Professional {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     @NotBlank
-    @Column(nullable = false)
+    @Size(min = 2, max = 100)
+    @Column(nullable = false, length = 100)
     private String name;
     @NotBlank
-    @Column(nullable = false)
+    @Size(min = 3, max = 50)
+    @Column(nullable = false, length = 50)
     private String speciality;
     @NotNull
     @Column(nullable = false)

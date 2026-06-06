@@ -5,6 +5,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.PositiveOrZero;
+import jakarta.validation.constraints.Size;
 
 import java.math.BigDecimal;
 
@@ -15,7 +16,8 @@ public class ServiceType {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     @NotBlank
-    @Column(nullable = false)
+    @Size(min = 3, max = 80)
+    @Column(nullable = false, length = 80)
     private String name;
     @Positive
     @Column(nullable = false)

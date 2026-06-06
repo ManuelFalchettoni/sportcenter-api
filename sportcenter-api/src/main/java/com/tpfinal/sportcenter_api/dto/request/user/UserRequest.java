@@ -3,14 +3,17 @@ package com.tpfinal.sportcenter_api.dto.request.user;
 import com.tpfinal.sportcenter_api.entity.user.User;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 
 public class UserRequest {
 
     @NotBlank
+    @Size(min = 3, max = 30)
     private String username;
 
     @NotBlank
     @Email
+    @Size(max = 254)
     private String email;
 
     @NotBlank

@@ -28,8 +28,8 @@ Profesional que presta servicios en el centro deportivo.
 | Campo        | Tipo    | Restricciones          |
 |--------------|---------|------------------------|
 | `id`         | Long    | PK, autogenerado       |
-| `name`       | String  | `@NotBlank`            |
-| `speciality` | String  | `@NotBlank`            |
+| `name`       | String  | `@NotBlank`, `@Size(2..100)` |
+| `speciality` | String  | `@NotBlank`, `@Size(3..50)`  |
 | `active`     | Boolean | `@NotNull`             |
 | `services`   | Set<ServiceType> | `@ManyToMany` — servicios que ofrece (tabla `professional_service_types`) |
 
@@ -65,7 +65,7 @@ Tipo de servicio que ofrece el centro (ej: sesión de kinesiología, clase de yo
 | Campo             | Tipo       | Restricciones                |
 |-------------------|------------|------------------------------|
 | `id`              | Long       | PK, autogenerado             |
-| `name`            | String     | `@NotBlank`                  |
+| `name`            | String     | `@NotBlank`, `@Size(3..80)`  |
 | `durationMinutes` | int        | `@Positive`                  |
 | `price`           | BigDecimal | `@NotNull`, `@PositiveOrZero` |
 
@@ -98,8 +98,8 @@ Usuario del sistema. La contraseña se almacena hasheada con BCrypt y nunca se d
 | Campo         | Tipo          | Restricciones                                  |
 |---------------|---------------|------------------------------------------------|
 | `id`          | Long          | PK, autogenerado                               |
-| `username`    | String        | `@NotBlank`, único                             |
-| `email`       | String        | `@NotBlank`, `@Email`, único                   |
+| `username`    | String        | `@NotBlank`, `@Size(3..30)`, único             |
+| `email`       | String        | `@NotBlank`, `@Email`, `@Size(max=254)`, único |
 | `password`    | String        | `@NotBlank` — se guarda hasheado con BCrypt    |
 | `role`        | UserEnum      | `ADMIN` o `USER` — fijado por el servidor, no aceptado en el body |
 | `createdDate` | LocalDateTime | Generado por el servidor, no editable          |

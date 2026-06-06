@@ -3,14 +3,17 @@ package com.tpfinal.sportcenter_api.dto.request.professional;
 import com.tpfinal.sportcenter_api.entity.professional.Professional;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 
 import java.util.HashSet;
 import java.util.Set;
 
 public class ProfessionalRequest {
     @NotBlank
+    @Size(min = 2, max = 100)
     private String name;
     @NotBlank
+    @Size(min = 3, max = 50)
     private String speciality;
     @NotNull
     private Boolean active;
