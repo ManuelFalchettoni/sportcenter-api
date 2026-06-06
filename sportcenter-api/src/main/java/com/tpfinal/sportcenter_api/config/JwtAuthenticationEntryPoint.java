@@ -26,6 +26,9 @@ public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
         this.objectMapper = objectMapper;
     }
 
+
+    //captura los intentos de acceso de usuarios no autenticados y
+    // devolvuelve una respuesta de error personalizada en formato JSON.
     @Override
     public void commence(HttpServletRequest request,
                          HttpServletResponse response,
@@ -33,12 +36,14 @@ public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
         response.setStatus(HttpStatus.UNAUTHORIZED.value());
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
 
+        //Arma el cuerpo del error
         Map<String, Object> body = new HashMap<>();
         body.put("timestamp", LocalDateTime.now());
         body.put("status", HttpStatus.UNAUTHORIZED.value());
         body.put("error", HttpStatus.UNAUTHORIZED.getReasonPhrase());
         body.put("message", authException.getMessage());
 
+        // se transforma en JSON
         objectMapper.writeValue(response.getWriter(), body);
     }
 }

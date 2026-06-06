@@ -91,4 +91,5 @@ public class AppointmentRequest {
     public void setServiceTypeId(Long serviceTypeId) {
         this.serviceTypeId = serviceTypeId;
     }
+
 }
