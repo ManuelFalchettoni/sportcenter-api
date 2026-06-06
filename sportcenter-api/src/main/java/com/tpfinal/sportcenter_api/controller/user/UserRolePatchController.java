@@ -5,16 +5,12 @@ import com.tpfinal.sportcenter_api.dto.response.user.UserResponse;
 import com.tpfinal.sportcenter_api.service.user.UserRoleUpdaterService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 /**
  * Controlador REST administrativo para cambiar el rol de un usuario.
  * Ruta base: {@code /sportcenter/users}.
- *
- * <p><b>TODO (seguridad):</b> este endpoint debe quedar restringido a
- * usuarios con rol {@code ADMIN} cuando se integre JWT.
- * Sugerencia: anotar el método con {@code @PreAuthorize("hasRole('ADMIN')")}
- * y habilitar method security en {@code SecurityConfig}.
  */
 @RestController
 @RequestMapping("/sportcenter/users")
@@ -33,6 +29,7 @@ public class UserRolePatchController {
      * @param request body con el nuevo rol ({@code USER} o {@code ADMIN}).
      * @return 200 OK con el usuario actualizado.
      */
+    @PreAuthorize("hasRole('ADMIN')")
     @PatchMapping("/{id}/role")
     public ResponseEntity<UserResponse> updateRole(@PathVariable Long id,
                                                    @Valid @RequestBody UserRoleUpdateRequest request) {
