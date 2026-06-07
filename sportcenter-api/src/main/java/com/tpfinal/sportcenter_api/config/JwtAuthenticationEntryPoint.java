@@ -38,7 +38,8 @@ public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
 
         response.getWriter().write(body);
     }
-
+    //formateador de seguridad que limpia los texto para que puedan viajar o
+    // guardarse en otros formatos sin romper la estructura del sistema.
     private String escape(String s) {
         if (s == null) return "";
         return s.replace("\\", "\\\\").replace("\"", "\\\"");
