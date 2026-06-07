@@ -330,6 +330,31 @@ Ejemplo:
 GET /sportcenter/service-types?page=0&size=10&sort=price,desc
 ```
 
+## Tests
+
+La suite usa **JUnit 5 + Mockito**, sin necesidad de MySQL ni de levantar el contexto completo de Spring.
+
+```bash
+cd sportcenter-api
+./mvnw test "-Dtest=*ServiceTest,*ControllerTest"
+```
+
+**Tests unitarios de servicios** (Mockito puro sobre la capa de lógica de negocio):
+
+- `AppointmentCreatorServiceTest` / `AppointmentUpdaterServiceTest` — alta y actualización de turnos: rango horario inválido (`endTime <= startTime`), entidades inexistentes (user/professional/serviceType) y **detección de solapamiento** (incluyendo que un turno no choque consigo mismo en el `PUT`).
+- `AppointmentFinderServiceTest` / `UserFinderServiceTest` — recuperación por id y `NotFoundException`.
+- `LoginServiceTest` — login OK, normalización del email, `401` con credenciales inválidas y la **mitigación de timing** (verificación contra el hash señuelo cuando el email no existe).
+- `UserCreatorServiceTest` — normalización (trim/lowercase), hasheo de password, rol forzado a `USER` y `409` por username/email duplicado.
+- `UserRoleUpdaterServiceTest` — cambio de rol y persistencia.
+
+**Tests de integración de controllers** (`@WebMvcTest` + `MockMvc`, servicios mockeados): verifican routing, validación `@Valid` y que `GlobalExceptionHandler` traduzca cada caso al status y body correctos.
+
+- `AuthLoginControllerTest` — `200` con token, `401` credenciales inválidas, `400` por validación del body.
+- `UserPostControllerTest` — `201` (y que la respuesta **nunca expone el password**), `409` duplicado, `400` por validación.
+- `AppointmentPostControllerTest` — `201`, `404` entidad inexistente, `409` solapamiento, `400` por rango/fecha (`@Future`) o campos faltantes.
+
+> El test `contextLoads()` (`@SpringBootTest`) sí requiere una base de datos disponible, por eso queda fuera del filtro de arriba.
+
 ## Estructura del proyecto
 
 Cada entidad sigue la misma organización por carpetas:
