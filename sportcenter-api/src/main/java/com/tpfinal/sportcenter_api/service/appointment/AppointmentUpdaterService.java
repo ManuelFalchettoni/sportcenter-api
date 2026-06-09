@@ -17,10 +17,7 @@ import org.springframework.stereotype.Service;
 
 /**
  * Servicio encargado de actualizar turnos existentes.
- * Reemplaza horario, notas y entidades relacionadas (profesional y tipo de
- * servicio), validando previamente que el rango horario sea coherente.
- *
- * <p>Solo el dueño del turno o un ADMIN pueden actualizarlo. El dueño no se
+ * Solo el dueño del turno o un ADMIN pueden actualizarlo. El dueño no se
  * modifica en el update: un turno no se transfiere a otro usuario.
  */
 @Service

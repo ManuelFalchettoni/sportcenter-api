@@ -17,11 +17,7 @@ import java.time.LocalDateTime;
 
 /**
  * Servicio encargado de crear nuevos turnos (appointments).
- * Valida el rango horario recibido y resuelve las entidades asociadas
- * (profesional y tipo de servicio) antes de persistir el turno.
- *
- * <p>El dueño del turno es siempre el usuario autenticado: llega ya cargado
- * desde la DB (lo trajo JwtFilter), por eso no hace falta buscarlo acá.
+ * El dueño del turno es siempre el usuario autenticado.
  */
 @Service
 public class AppointmentCreatorService {
