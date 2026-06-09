@@ -201,6 +201,8 @@ Turno reservado entre un usuario y un profesional para un tipo de servicio deter
 | `startTime`    | LocalDateTime | `@NotNull`, `@Future`                                        |
 | `endTime`      | LocalDateTime | `@NotNull`, `@Future` — debe ser posterior a `startTime`     |
 | `confirmed`    | Boolean       | Se inicializa en `false` al crear el turno                   |
+| `cancelled`    | Boolean       | `@NotNull`, se inicializa en `false`. Se setea a `true` al cancelar |
+| `cancelledAt`  | LocalDateTime | Nullable. Se setea al momento de cancelar el turno           |
 | `notes`        | String        | Opcional, `@Size(max = 500)`                                 |
 | `createdAt`    | LocalDateTime | Generado por el servidor, no editable                        |
 | `user`         | User          | `@ManyToOne`, requerido — `userId` `@NotNull` `@Positive`         |
@@ -215,6 +217,7 @@ Turno reservado entre un usuario y un profesional para un tipo de servicio deter
 | GET    | `?page=&size=&sort=`  | Lista paginada                    | `200 OK` · `Page<AppointmentResponse>` |
 | POST   | `/`                   | Crea un turno                     | `201 Created` · `AppointmentResponse`  |
 | PUT    | `/{id}`               | Actualiza un turno                | `200 OK` · `AppointmentResponse`       |
+| PATCH  | `/{id}/cancel`        | Cancela un turno (soft delete)    | `200 OK` · `AppointmentResponse`       |
 | DELETE | `/{id}`               | Elimina un turno                  | `204 No Content`                       |
 
 ##### Body de ejemplo (`POST` / `PUT`)
@@ -235,14 +238,25 @@ Reglas:
 - `endTime` debe ser estrictamente posterior a `startTime`; caso contrario responde `400 Bad Request`.
 - `userId`, `professionalId` y `serviceTypeId` deben referenciar entidades existentes; caso contrario `404 Not Found`.
 - **Sin doble reserva:** un profesional no puede tener dos turnos que se solapen. Si el rango pedido pisa otro turno del mismo profesional, responde `409 Conflict` (`AppointmentOverlapException`). En el `PUT`, el propio turno que se edita no cuenta como solapamiento.
-- En el `POST`, el turno se crea con `confirmed = false` y `createdAt` se setea al momento actual.
+- En el `POST`, el turno se crea con `confirmed = false`, `cancelled = false` y `createdAt` se setea al momento actual.
+
+##### Cancelación (soft delete)
+
+`PATCH /sportcenter/appointments/{id}/cancel` marca el turno como cancelado sin eliminarlo:
+
+- Setea `cancelled = true` y `cancelledAt = now()`.
+- El turno queda en el historial pero **deja de ocupar el horario del profesional**: el chequeo de solapamiento ignora los turnos cancelados (sufijo `AndCancelledFalse` en el repositorio), así que ese slot queda libre para reservarse de nuevo.
+- Si el turno ya estaba cancelado, responde `409 Conflict` (`AppointmentAlreadyCancelledException`).
+- Si el id no existe, responde `404 Not Found`.
+
+A diferencia del `DELETE`, que borra el registro físicamente, la cancelación preserva la traza del turno (quién, cuándo se reservó y cuándo se canceló).
 
 ##### Cómo se detecta el solapamiento
 
 El chequeo vive en `JpaAppointmentRepository`, que es una **interfaz** sin implementación escrita a mano:
 
 ```java
-boolean existsByProfessionalIdAndStartTimeBeforeAndEndTimeAfter(
+boolean existsByProfessionalIdAndStartTimeBeforeAndEndTimeAfterAndCancelledFalse(
         Long professionalId, LocalDateTime endTime, LocalDateTime startTime);
 ```
 
@@ -253,6 +267,7 @@ No tiene cuerpo porque es un **derived query method** de Spring Data JPA: al arr
 | `ProfessionalId`     | `professional.id = ?` |
 | `StartTimeBefore`    | `startTime < ?`       |
 | `EndTimeAfter`       | `endTime > ?`         |
+| `CancelledFalse`     | `cancelled = false`   |
 
 Que se traduce (en JPQL, simplificado) a:
 
@@ -261,11 +276,12 @@ SELECT count(a) > 0 FROM Appointment a
 WHERE a.professional.id = :professionalId
   AND a.startTime < :endTime
   AND a.endTime   > :startTime
+  AND a.cancelled = false
 ```
 
-Los parámetros se asignan **por posición**, en el orden en que aparecen en el nombre. Por eso en la llamada se pasan "cruzados": el `endTime` del turno nuevo se compara contra el `startTime` de los turnos existentes y viceversa. Dos intervalos se solapan cuando **uno empieza antes de que el otro termine y termina después de que el otro empieza**. Se usan comparaciones estrictas (`<`, `>`) a propósito: dos turnos contiguos (uno termina justo cuando el otro empieza, p. ej. `10–11` y `11–12`) **no** se consideran solapados.
+Los parámetros se asignan **por posición**, en el orden en que aparecen en el nombre. Por eso en la llamada se pasan "cruzados": el `endTime` del turno nuevo se compara contra el `startTime` de los turnos existentes y viceversa. Dos intervalos se solapan cuando **uno empieza antes de que el otro termine y termina después de que el otro empieza**. Se usan comparaciones estrictas (`<`, `>`) a propósito: dos turnos contiguos (uno termina justo cuando el otro empieza, p. ej. `10–11` y `11–12`) **no** se consideran solapados. El filtro `cancelled = false` deja afuera los turnos cancelados, así un horario cancelado vuelve a estar disponible.
 
-La variante `...AndEndTimeAfterAndIdNot(..., id)` agrega `AND a.id <> :id` y se usa al actualizar, para que un turno no choque consigo mismo.
+La variante `...AndEndTimeAfterAndIdNotAndCancelledFalse(..., id)` agrega `AND a.id <> :id` y se usa al actualizar, para que un turno no choque consigo mismo.
 
 > El SQL real generado se puede ver en consola gracias a `spring.jpa.show-sql=true`.
 
@@ -309,7 +325,7 @@ Adicionalmente, Bean Validation está activado en los callbacks pre-persist y pr
 | `401 Unauthorized` | Falta el token, o es inválido/expirado; o credenciales inválidas en el login. |
 | `403 Forbidden` | Autenticado pero sin permisos (p. ej. un no-ADMIN en `PATCH /{id}/role`). |
 | `404 Not Found` | Recurso inexistente (usuario, profesional, service type o turno). |
-| `409 Conflict` | `username`/`email` duplicado, o turno solapado. |
+| `409 Conflict` | `username`/`email` duplicado, turno solapado, o turno ya cancelado. |
 | `500 Internal Server Error` | Error inesperado; el detalle se loguea en el servidor y **no** se expone al cliente. |
 
 Todos comparten el mismo formato de body de arriba. `GlobalExceptionHandler` es la única fuente de verdad: por eso las excepciones de dominio no usan `@ResponseStatus`.
