@@ -6,22 +6,18 @@ import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Service;
 
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
-import java.util.List;
 
 /**
  * Emisión y verificación de tokens JWT (HS256). API jjwt 0.12.6.
  *
- * <p>Subject = username. Claim "role" = UserEnum como string.
- * Las authorities se exponen como ROLE_<rol> para que
- * hasRole('ADMIN') matchee.
+ * <p>Subject = username. El claim "role" es informativo para el cliente:
+ * el servidor autoriza con el rol cargado desde la DB
+ * (CustomUserDetailsService), no con el del token.
  */
 @Service
 public class JwtService {
@@ -63,19 +59,11 @@ public class JwtService {
     }
 
     /**
-     * Construye el Authentication que va al SecurityContext.
+     * Devuelve el username (subject) del token.
      * Asume que isValid(String) ya pasó: si el token es inválido tira excepción.
      */
-    public Authentication toAuthentication(String token) {
-        Claims claims = parse(token);
-        String username = claims.getSubject();
-        String role = claims.get("role", String.class);
-
-        // Prefijo ROLE_ obligatorio para que hasRole('ADMIN') funcione.
-        var authorities = List.of(new SimpleGrantedAuthority("ROLE_" + role));
-
-        // credentials = null porque ya autenticamos vía token, no hay password.
-        return new UsernamePasswordAuthenticationToken(username, null, authorities);
+    public String extractUsername(String token) {
+        return parse(token).getSubject();
     }
 
     // Verifica firma + expiración y devuelve los claims.

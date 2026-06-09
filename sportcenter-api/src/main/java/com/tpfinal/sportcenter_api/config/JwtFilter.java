@@ -4,8 +4,11 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.springframework.security.core.Authentication;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
@@ -13,24 +16,30 @@ import java.io.IOException;
 
 /**
  * Filtro que extrae el JWT del header  Authorization: Bearer ...,
- * lo valida y, si es válido, deposita la Authentication en el
+ * lo valida y, si es válido, carga el usuario real desde la base
+ * (UserDetailsService) y deposita la Authentication en el
  * SecurityContextHolder para que el resto de Spring Security
- * (autorización, @PreAuthorize, @AuthenticationPrincipal)
- * pueda operar.
+ * (autorización, @PreAuthorize, @AuthenticationPrincipal) pueda operar.
  *
- * <p>No rechaza requests sin token ni con token inválido: esa decisión la
- * toma SecurityFilterChain según las reglas de autorización
- * configuradas. Si no hay autenticación cuando se exige, responde
- * JwtAuthenticationEntryPoint.
+ * <p>El token solo prueba identidad: el rol y la existencia del usuario
+ * se leen frescos de la DB en cada request. Así un usuario borrado o
+ * con rol cambiado no sigue operando con un token viejo.
+ *
+ * <p>No rechaza requests sin token, con token inválido o de un usuario
+ * inexistente: esa decisión la toma SecurityFilterChain según las reglas
+ * de autorización configuradas. Si no hay autenticación cuando se exige,
+ * responde JwtAuthenticationEntryPoint.
  */
 @Component
 public class JwtFilter extends OncePerRequestFilter {
 
     private final JwtService jwtService;
+    private final UserDetailsService userDetailsService;
 
-    // Conectamos el servicio que sabe cómo validar y leer los tokens
-    public JwtFilter(JwtService jwtService) {
+    // Conectamos el servicio que valida tokens y el que carga usuarios de la DB
+    public JwtFilter(JwtService jwtService, UserDetailsService userDetailsService) {
         this.jwtService = jwtService;
+        this.userDetailsService = userDetailsService;
     }
 
     // Este metodo se ejecuta automáticamente con cada petición que llega
@@ -50,16 +59,26 @@ public class JwtFilter extends OncePerRequestFilter {
 
             // 3. Le preguntamos al servicio si el token es real y vigente
             if (jwtService.isValid(token)) {
+                try {
+                    // 4. El token prueba quién es; los datos reales (rol incluido)
+                    //    salen de la base, no de los claims
+                    String username = jwtService.extractUsername(token);
+                    UserDetails userDetails = userDetailsService.loadUserByUsername(username);
 
-                // Extraemos la información del usuario que viene dentro del token
-                Authentication auth = jwtService.toAuthentication(token);
+                    // credentials = null porque ya autenticamos vía token, no hay password
+                    var auth = new UsernamePasswordAuthenticationToken(
+                            userDetails, null, userDetails.getAuthorities());
 
-                // Le decimos al sistema de seguridad: "Este usuario es válido, dale acceso"
-                SecurityContextHolder.getContext().setAuthentication(auth);
+                    // Le decimos al sistema de seguridad: "Este usuario es válido, dale acceso"
+                    SecurityContextHolder.getContext().setAuthentication(auth);
+                } catch (UsernameNotFoundException e) {
+                    // Token firmado y vigente pero el usuario ya no existe en la DB
+                    // (fue borrado): no autenticamos y la cadena devolverá 401.
+                }
             }
         }
 
-        // 4. Pase lo que pase, dejamos que la petición siga su camino al siguiente control
+        // 5. Pase lo que pase, dejamos que la petición siga su camino al siguiente control
         filterChain.doFilter(request, response);
     }
 }

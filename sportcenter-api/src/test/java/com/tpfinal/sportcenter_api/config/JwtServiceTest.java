@@ -3,8 +3,6 @@ package com.tpfinal.sportcenter_api.config;
 import com.tpfinal.sportcenter_api.enums.user.UserEnum;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -35,20 +33,13 @@ class JwtServiceTest {
         assertThat(jwtService.isValid(token)).isTrue();
     }
 
-    // El token debe poder convertirse en un Authentication con el username como
-    // principal y el rol expuesto como authority "ROLE_ADMIN".
+    // El subject del token debe ser el username con el que se generó.
+    // El rol ya no se lee del token: lo carga CustomUserDetailsService desde la DB.
     @Test
-    void toAuthentication_exposesUsernameAndRoleAuthority() {
+    void extractUsername_returnsTokenSubject() {
         String token = jwtService.generateToken("juan", UserEnum.ADMIN);
 
-        Authentication auth = jwtService.toAuthentication(token);
-
-        assertThat(auth.getPrincipal()).isEqualTo("juan");
-        // extracting: de cada authority sacamos su String y verificamos que
-        // entre ellas esté "ROLE_ADMIN" (el prefijo ROLE_ lo exige Spring Security).
-        assertThat(auth.getAuthorities())
-                .extracting(GrantedAuthority::getAuthority)
-                .contains("ROLE_ADMIN");
+        assertThat(jwtService.extractUsername(token)).isEqualTo("juan");
     }
 
     // Texto basura o vacío no son tokens válidos.

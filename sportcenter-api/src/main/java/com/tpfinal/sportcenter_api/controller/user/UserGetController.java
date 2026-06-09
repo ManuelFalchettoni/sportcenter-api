@@ -24,9 +24,10 @@ public class UserGetController {
     }
 
     /**
-     * Obtiene un usuario por su ID.
+     * Obtiene un usuario por su ID. Un admin puede ver a cualquiera;
+     * un usuario común solo puede verse a sí mismo.
      */
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN') or #id == principal.id")
     @GetMapping("/{id}")
     public ResponseEntity<UserResponse> find(@PathVariable Long id) {
         User user = userFinderService.find(id);
