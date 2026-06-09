@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 /**
  * Controlador REST que expone el listado paginado de turnos.
- * Ruta base: {@code /sportcenter/appointments}.
+ * Ruta base: /sportcenter/appointments.
  */
 @RestController
 @RequestMapping("/sportcenter/appointments")

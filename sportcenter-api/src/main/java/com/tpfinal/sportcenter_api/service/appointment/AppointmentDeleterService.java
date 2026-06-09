@@ -20,11 +20,7 @@ public class AppointmentDeleterService {
 
     /**
      * Elimina el turno identificado por el ID recibido.
-     * <p>
-     * Si no existe, se propaga {@link com.tpfinal.sportcenter_api.exception.appointment.AppointmentNotFoundException}
-     * desde el finder.
-     *
-     * @param id identificador del turno a eliminar.
+     * Si no existe, el finder lanza AppointmentNotFoundException.
      */
     public void delete(Long id) {
         Appointment appointment = appointmentFinderService.find(id);

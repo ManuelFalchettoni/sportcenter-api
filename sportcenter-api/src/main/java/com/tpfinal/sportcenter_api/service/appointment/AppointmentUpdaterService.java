@@ -19,7 +19,6 @@ import org.springframework.stereotype.Service;
 
 /**
  * Servicio encargado de actualizar turnos existentes.
- * <p>
  * Reemplaza horario, notas y entidades relacionadas (usuario, profesional
  * y tipo de servicio), validando previamente que el rango horario sea coherente.
  */
@@ -46,16 +45,6 @@ public class AppointmentUpdaterService {
 
     /**
      * Actualiza los datos de un turno existente.
-     *
-     * @param id identificador del turno a actualizar.
-     * @param request nuevos datos del turno.
-     * @return DTO de respuesta con el estado actualizado del turno.
-     * @throws IllegalArgumentException si {@code endTime} no es posterior a {@code startTime}.
-     * @throws com.tpfinal.sportcenter_api.exception.appointment.AppointmentNotFoundException si el turno no existe.
-     * @throws com.tpfinal.sportcenter_api.exception.user.UserNotFoundException si el usuario no existe.
-     * @throws com.tpfinal.sportcenter_api.exception.professional.ProfessionalNotFoundException si el profesional no existe.
-     * @throws com.tpfinal.sportcenter_api.exception.servicetype.ServiceTypeNotFoundException si el tipo de servicio no existe.
-     * @throws com.tpfinal.sportcenter_api.exception.appointment.AppointmentOverlapException si el profesional ya tiene otro turno que se solapa con el rango pedido.
      */
     public AppointmentResponse update(Long id, @Valid AppointmentRequest request) {
         if (!request.getEndTime().isAfter(request.getStartTime())) {
@@ -73,7 +62,7 @@ public class AppointmentUpdaterService {
 
         // Misma protección de doble reserva que en la creación, pero excluyendo
         // este mismo turno (si solo cambian las notas, no debe chocar consigo mismo).
-        if (jpaAppointmentRepository.existsByProfessionalIdAndStartTimeBeforeAndEndTimeAfterAndIdNot(
+        if (jpaAppointmentRepository.existsByProfessionalIdAndStartTimeBeforeAndEndTimeAfterAndIdNotAndCancelledFalse(
                 request.getProfessionalId(), request.getEndTime(), request.getStartTime(), id)) {
             throw new AppointmentOverlapException(request.getProfessionalId());
         }

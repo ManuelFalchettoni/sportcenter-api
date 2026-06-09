@@ -19,7 +19,6 @@ import java.time.LocalDateTime;
 
 /**
  * Servicio encargado de crear nuevos turnos (appointments).
- * <p>
  * Valida el rango horario recibido y resuelve las entidades asociadas
  * (usuario, profesional y tipo de servicio) antes de persistir el turno.
  */
@@ -43,17 +42,9 @@ public class AppointmentCreatorService {
 
     /**
      * Crea y persiste un nuevo turno a partir de los datos recibidos.
-     * <p>
      * El turno se guarda como no confirmado y con la fecha de creación
      * establecida en el momento actual.
      *
-     * @param request datos del turno a crear (horario, notas e IDs relacionados).
-     * @return el turno persistido con su ID generado.
-     * @throws IllegalArgumentException si {@code endTime} no es posterior a {@code startTime}.
-     * @throws UserNotFoundException si el usuario no existe.
-     * @throws ProfessionalNotFoundException si el profesional no existe.
-     * @throws ServiceTypeNotFoundException si el tipo de servicio no existe.
-     * @throws AppointmentOverlapException si el profesional ya tiene un turno que se solapa con el rango pedido.
      */
     public Appointment create(AppointmentRequest request){
         if (!request.getEndTime().isAfter(request.getStartTime())) {
@@ -69,7 +60,7 @@ public class AppointmentCreatorService {
 
         // Evitamos la doble reserva: si el profesional ya tiene un turno que se
         // solapa con el rango pedido, no permitimos crear otro.
-        if (jpaAppointmentRepository.existsByProfessionalIdAndStartTimeBeforeAndEndTimeAfter(
+        if (jpaAppointmentRepository.existsByProfessionalIdAndStartTimeBeforeAndEndTimeAfterAndCancelledFalse(
                 request.getProfessionalId(), request.getEndTime(), request.getStartTime())) {
             throw new AppointmentOverlapException(request.getProfessionalId());
         }

@@ -80,7 +80,7 @@ class AppointmentUpdaterServiceTest {
         when(jpaUserRepository.findById(1L)).thenReturn(Optional.of(user));
         when(jpaProfessionalRepository.findById(2L)).thenReturn(Optional.of(professional));
         when(jpaServiceTypeRepository.findById(3L)).thenReturn(Optional.of(serviceType));
-        when(jpaAppointmentRepository.existsByProfessionalIdAndStartTimeBeforeAndEndTimeAfterAndIdNot(
+        when(jpaAppointmentRepository.existsByProfessionalIdAndStartTimeBeforeAndEndTimeAfterAndIdNotAndCancelledFalse(
                 2L, end, start, 10L)).thenReturn(false);
         when(jpaAppointmentRepository.save(any(Appointment.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
@@ -122,7 +122,7 @@ class AppointmentUpdaterServiceTest {
         when(jpaUserRepository.findById(1L)).thenReturn(Optional.of(user));
         when(jpaProfessionalRepository.findById(2L)).thenReturn(Optional.of(professional));
         when(jpaServiceTypeRepository.findById(3L)).thenReturn(Optional.of(serviceType));
-        when(jpaAppointmentRepository.existsByProfessionalIdAndStartTimeBeforeAndEndTimeAfterAndIdNot(
+        when(jpaAppointmentRepository.existsByProfessionalIdAndStartTimeBeforeAndEndTimeAfterAndIdNotAndCancelledFalse(
                 2L, end, start, 10L)).thenReturn(true);
 
         assertThatThrownBy(() -> service.update(10L, request()))

@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 /**
  * Controlador REST que expone la consulta de un turno por ID.
- * Ruta base: {@code /sportcenter/appointments}.
+ * Ruta base: /sportcenter/appointments.
  */
 @RestController
 @RequestMapping("/sportcenter/appointments")

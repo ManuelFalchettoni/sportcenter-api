@@ -12,7 +12,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 
 /**
- * Filtro que extrae el JWT del header {@code Authorization: Bearer ...},
+ * Filtro que extrae el JWT del header  Authorization: Bearer ...,
  * lo valida y, si es válido, deposita la {@link Authentication} en el
  * {@link SecurityContextHolder} para que el resto de Spring Security
  * (autorización, {@code @PreAuthorize}, {@code @AuthenticationPrincipal})

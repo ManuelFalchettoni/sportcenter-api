@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 /**
  * Controlador REST que expone el endpoint para crear nuevos turnos.
- * Ruta base: {@code /sportcenter/appointments}.
+ * Ruta base: /sportcenter/appointments.
  */
 @RestController
 @RequestMapping("/sportcenter/appointments")

@@ -10,6 +10,8 @@ public class AppointmentResponse {
     private LocalDateTime startTime;
     private LocalDateTime endTime;
     private Boolean confirmed;
+    private Boolean cancelled;
+    private LocalDateTime cancelledAt;
     private String notes;
     private LocalDateTime createdAt;
     private Long userId;
@@ -22,12 +24,15 @@ public class AppointmentResponse {
     public AppointmentResponse(){}
 
     public AppointmentResponse(Long id, LocalDateTime startTime, LocalDateTime endTime, Boolean confirmed,
-                               String notes, LocalDateTime createdAt, Long userId, String username,
+                               Boolean cancelled, LocalDateTime cancelledAt, String notes, LocalDateTime createdAt,
+                               Long userId, String username,
                                Long professionalId, String professionalName, Long serviceTypeId, String serviceTypeName) {
         this.id = id;
         this.startTime = startTime;
         this.endTime = endTime;
         this.confirmed = confirmed;
+        this.cancelled = cancelled;
+        this.cancelledAt = cancelledAt;
         this.notes = notes;
         this.createdAt = createdAt;
         this.userId = userId;
@@ -68,6 +73,22 @@ public class AppointmentResponse {
 
     public void setConfirmed(Boolean confirmed) {
         this.confirmed = confirmed;
+    }
+
+    public Boolean getCancelled() {
+        return cancelled;
+    }
+
+    public void setCancelled(Boolean cancelled) {
+        this.cancelled = cancelled;
+    }
+
+    public LocalDateTime getCancelledAt() {
+        return cancelledAt;
+    }
+
+    public void setCancelledAt(LocalDateTime cancelledAt) {
+        this.cancelledAt = cancelledAt;
     }
 
     public String getNotes() {
@@ -140,6 +161,8 @@ public class AppointmentResponse {
                 appointment.getStartTime(),
                 appointment.getEndTime(),
                 appointment.getConfirmed(),
+                appointment.getCancelled(),
+                appointment.getCancelledAt(),
                 appointment.getNotes(),
                 appointment.getCreatedAt(),
                 appointment.getUser().getId(),

@@ -6,7 +6,7 @@ import org.springframework.web.bind.annotation.*;
 
 /**
  * Controlador REST que expone la baja de turnos.
- * Ruta base: {@code /sportcenter/appointments}.
+ * Ruta base: /sportcenter/appointments.
  */
 @RestController
 @RequestMapping("/sportcenter/appointments")

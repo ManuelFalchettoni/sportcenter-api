@@ -28,6 +28,19 @@ public class Appointment {
     @NotNull
     private Boolean confirmed = false;
 
+    /**
+     * Indica si el turno fue cancelado. el turno queda en el historial pero deja de estar activo.
+     *
+     */
+    @Column(nullable = false)
+    @NotNull
+    private Boolean cancelled = false;
+
+    /**
+     * Momento en que se canceló el turno.
+     */
+    private LocalDateTime cancelledAt;
+
     @Column(length = 500)
     @Size(max = 500)
     private String notes;
@@ -93,6 +106,22 @@ public class Appointment {
 
     public void setConfirmed(Boolean confirmed) {
         this.confirmed = confirmed;
+    }
+
+    public Boolean getCancelled() {
+        return cancelled;
+    }
+
+    public void setCancelled(Boolean cancelled) {
+        this.cancelled = cancelled;
+    }
+
+    public LocalDateTime getCancelledAt() {
+        return cancelledAt;
+    }
+
+    public void setCancelledAt(LocalDateTime cancelledAt) {
+        this.cancelledAt = cancelledAt;
     }
 
     public String getNotes() {
