@@ -27,13 +27,14 @@ public class Professional {
     @Column(nullable = false)
     private Boolean active;
 
+    //creacion de tabla relacional. LAZY carga los servicios solo si los solicito con el get
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
             name = "professional_service_types",
             joinColumns = @JoinColumn(name = "professional_id"),
             inverseJoinColumns = @JoinColumn(name = "service_type_id")
     )
-    private Set<ServiceType> services = new HashSet<>();
+    private Set<ServiceType> services = new HashSet<>(); // En los SET no se permiten datos duplicados
 
     public Professional(){};
     public Professional(String name, String speciality, Boolean active) {
