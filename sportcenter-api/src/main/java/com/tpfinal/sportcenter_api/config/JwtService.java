@@ -19,9 +19,9 @@ import java.util.List;
 /**
  * Emisión y verificación de tokens JWT (HS256). API jjwt 0.12.6.
  *
- * <p>Subject = username. Claim "role" = {@link UserEnum} como string.
- * Las authorities se exponen como {@code ROLE_<rol>} para que
- * {@code hasRole('ADMIN')} matchee.
+ * <p>Subject = username. Claim "role" = UserEnum como string.
+ * Las authorities se exponen como ROLE_<rol> para que
+ * hasRole('ADMIN') matchee.
  */
 @Service
 public class JwtService {
@@ -63,8 +63,8 @@ public class JwtService {
     }
 
     /**
-     * Construye el {@link Authentication} que va al SecurityContext.
-     * Asume que {@link #isValid(String)} ya pasó: si el token es inválido tira excepción.
+     * Construye el Authentication que va al SecurityContext.
+     * Asume que isValid(String) ya pasó: si el token es inválido tira excepción.
      */
     public Authentication toAuthentication(String token) {
         Claims claims = parse(token);

@@ -25,9 +25,6 @@ public class AppointmentGetAllController {
 
     /**
      * Lista turnos en forma paginada.
-     *
-     * @param pageable parámetros de paginación y orden (resueltos por Spring).
-     * @return 200 OK con la página de turnos mapeados a DTO de respuesta.
      */
     @GetMapping
     public ResponseEntity<Page<AppointmentResponse>> findAll(Pageable pageable) {

@@ -12,7 +12,7 @@ import java.net.URI;
 
 /**
  * Controlador REST que expone el alta de tipos de servicio.
- * Ruta base: {@code /sportcenter/service-types}.
+ * Ruta base: /sportcenter/service-types.
  */
 @RestController
 @RequestMapping("/sportcenter/service-types")
@@ -26,10 +26,7 @@ public class ServiceTypePostController {
     /**
      * Crea un nuevo tipo de servicio.
      * <p>
-     * La respuesta incluye el header {@code Location} apuntando al recurso creado.
-     *
-     * @param request datos validados del tipo de servicio.
-     * @return 201 Created con el tipo de servicio persistido en el cuerpo.
+     * La respuesta incluye el header Location apuntando al recurso creado.
      */
     @PostMapping
     public ResponseEntity<ServiceTypeResponse> create(@RequestBody @Valid ServiceTypeRequest request){

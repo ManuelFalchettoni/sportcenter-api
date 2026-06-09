@@ -24,9 +24,6 @@ public class AppointmentGetController {
 
     /**
      * Obtiene un turno por su ID.
-     *
-     * @param id identificador del turno.
-     * @return 200 OK con el turno encontrado.
      */
     @GetMapping("/{id}")
     public ResponseEntity<AppointmentResponse> find(@PathVariable Long id){

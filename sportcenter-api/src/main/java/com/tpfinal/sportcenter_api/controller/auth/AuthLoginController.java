@@ -11,8 +11,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * Endpoint público de login. Ruta base: {@code /sportcenter/auth}.
- * Declarado público en {@link com.tpfinal.sportcenter_api.config.SecurityConfig}.
+ * Endpoint público de login. Ruta base: /sportcenter/auth.
+ * Declarado público en SecurityConfig.
  */
 @RestController
 @RequestMapping("/sportcenter/auth")

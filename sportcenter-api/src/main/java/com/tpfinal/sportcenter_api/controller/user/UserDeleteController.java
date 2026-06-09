@@ -6,7 +6,7 @@ import org.springframework.web.bind.annotation.*;
 
 /**
  * Controlador REST que expone la baja de usuarios.
- * Ruta base: {@code /sportcenter/users}.
+ * Ruta base: /sportcenter/users.
  */
 @RestController
 @RequestMapping("/sportcenter/users")
@@ -19,9 +19,6 @@ public class UserDeleteController {
 
     /**
      * Elimina el usuario indicado.
-     *
-     * @param id identificador del usuario.
-     * @return 204 No Content si se eliminó correctamente.
      */
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {

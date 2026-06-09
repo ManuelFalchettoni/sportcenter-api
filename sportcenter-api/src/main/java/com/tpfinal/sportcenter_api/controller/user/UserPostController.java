@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 /**
  * Controlador REST que expone el alta de usuarios.
- * Ruta base: {@code /sportcenter/users}.
+ * Ruta base: /sportcenter/users.
  */
 @RestController
 @RequestMapping("/sportcenter/users")
@@ -27,9 +27,6 @@ public class UserPostController {
 
     /**
      * Registra un nuevo usuario.
-     *
-     * @param request datos validados del usuario a crear.
-     * @return 201 Created con el usuario persistido en el cuerpo.
      */
     @PostMapping
     public ResponseEntity<UserResponse> create(@Valid @RequestBody UserRequest request) {

@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 /**
  * Controlador REST que expone la consulta de un usuario por ID.
- * Ruta base: {@code /sportcenter/users}.
+ * Ruta base: /sportcenter/users.
  */
 @RestController
 @RequestMapping("/sportcenter/users")
@@ -24,9 +24,6 @@ public class UserGetController {
 
     /**
      * Obtiene un usuario por su ID.
-     *
-     * @param id identificador del usuario.
-     * @return 200 OK con el usuario encontrado.
      */
     @GetMapping("/{id}")
     public ResponseEntity<UserResponse> find(@PathVariable Long id) {

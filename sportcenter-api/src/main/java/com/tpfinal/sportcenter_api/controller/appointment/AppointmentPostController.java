@@ -27,9 +27,6 @@ public class AppointmentPostController {
 
     /**
      * Crea un nuevo turno.
-     *
-     * @param request datos validados del turno a crear.
-     * @return 201 Created con el turno persistido en el cuerpo.
      */
     @PostMapping
     public ResponseEntity<AppointmentResponse> create(@Valid @RequestBody AppointmentRequest request){

@@ -33,12 +33,6 @@ public class ProfessionalUpdaterService {
 
     /**
      * Actualiza los datos del profesional identificado por el ID.
-     *
-     * @param request nuevos datos del profesional.
-     * @param id identificador del profesional a actualizar.
-     * @return el profesional persistido con sus cambios.
-     * @throws com.tpfinal.sportcenter_api.exception.professional.ProfessionalNotFoundException si no existe.
-     * @throws com.tpfinal.sportcenter_api.exception.servicetype.ServiceTypeNotFoundException si algún ID de servicio no existe.
      */
     public Professional update(ProfessionalRequest request, Long id) {
         Professional professional = professionalFinderService.find(id);

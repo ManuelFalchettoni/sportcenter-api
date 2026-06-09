@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 /**
  * Controlador REST que expone la baja de tipos de servicio.
- * Ruta base: {@code /sportcenter/service-types}.
+ * Ruta base: /sportcenter/service-types.
  */
 @RestController
 @RequestMapping("/sportcenter/service-types")
@@ -22,9 +22,6 @@ public class ServiceTypeDeleteController {
 
     /**
      * Elimina el tipo de servicio indicado.
-     *
-     * @param id identificador del tipo de servicio.
-     * @return 204 No Content si se eliminó correctamente.
      */
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id){

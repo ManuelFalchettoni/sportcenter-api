@@ -13,15 +13,15 @@ import java.io.IOException;
 
 /**
  * Filtro que extrae el JWT del header  Authorization: Bearer ...,
- * lo valida y, si es válido, deposita la {@link Authentication} en el
- * {@link SecurityContextHolder} para que el resto de Spring Security
- * (autorización, {@code @PreAuthorize}, {@code @AuthenticationPrincipal})
+ * lo valida y, si es válido, deposita la Authentication en el
+ * SecurityContextHolder para que el resto de Spring Security
+ * (autorización, @PreAuthorize, @AuthenticationPrincipal)
  * pueda operar.
  *
  * <p>No rechaza requests sin token ni con token inválido: esa decisión la
- * toma {@code SecurityFilterChain} según las reglas de autorización
+ * toma SecurityFilterChain según las reglas de autorización
  * configuradas. Si no hay autenticación cuando se exige, responde
- * {@link JwtAuthenticationEntryPoint}.
+ * JwtAuthenticationEntryPoint.
  */
 @Component
 public class JwtFilter extends OncePerRequestFilter {

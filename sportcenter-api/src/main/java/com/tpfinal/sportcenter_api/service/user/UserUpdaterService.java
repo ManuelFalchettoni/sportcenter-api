@@ -30,12 +30,6 @@ public class UserUpdaterService {
 
     /**
      * Actualiza los datos del usuario identificado por el ID.
-     *
-     * @param id identificador del usuario a actualizar.
-     * @param request nuevos datos del usuario; la contraseña se actualiza solo si no es nula ni vacía.
-     * @return DTO de respuesta con el estado actualizado del usuario.
-     * @throws com.tpfinal.sportcenter_api.exception.user.UserNotFoundException si no existe.
-     * @throws UserAlreadyExistsException si el nuevo username o email ya están en uso por otro usuario.
      */
     public UserResponse update(Long id, @Valid UserRequest request) {
         User user = userFinderService.find(id);

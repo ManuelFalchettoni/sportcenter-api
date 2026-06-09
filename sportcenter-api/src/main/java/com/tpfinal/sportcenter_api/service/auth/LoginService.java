@@ -37,12 +37,6 @@ public class LoginService {
 
     /**
      * Valida las credenciales y, si son correctas, devuelve un token.
-     *
-     * @param request email + password en claro.
-     * @return un {@link LoginResponse} con el JWT firmado.
-     * @throws InvalidCredentialsException si el email no existe o la password no
-     *         coincide. Es deliberadamente la misma excepción (y el mismo 401
-     *         genérico) en ambos casos, para no revelar si el email está registrado.
      */
     public LoginResponse login(LoginRequest request) {
         // Normalizamos igual que en el registro para que el lookup matchee.

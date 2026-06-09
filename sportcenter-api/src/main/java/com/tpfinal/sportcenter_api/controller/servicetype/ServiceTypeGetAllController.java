@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 /**
  * Controlador REST que expone el listado paginado de tipos de servicio.
- * Ruta base: {@code /sportcenter/service-types}.
+ * Ruta base: /sportcenter/service-types.
  */
 @RestController
 @RequestMapping("/sportcenter/service-types")
@@ -24,9 +24,6 @@ public class ServiceTypeGetAllController {
 
     /**
      * Lista tipos de servicio en forma paginada.
-     *
-     * @param pageable parámetros de paginación y orden.
-     * @return 200 OK con la página de tipos de servicio mapeados a DTO.
      */
     @GetMapping
     public ResponseEntity<Page<ServiceTypeResponse>> findAll(Pageable pageable) {

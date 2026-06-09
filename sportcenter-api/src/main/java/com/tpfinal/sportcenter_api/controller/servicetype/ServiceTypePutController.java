@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.*;
 
 /**
  * Controlador REST que expone la actualización de tipos de servicio.
- * Ruta base: {@code /sportcenter/service-types}.
+ * Ruta base: /sportcenter/service-types.
  */
 @RestController
 @RequestMapping("/sportcenter/service-types")
@@ -23,10 +23,6 @@ public class ServiceTypePutController {
 
     /**
      * Actualiza un tipo de servicio existente.
-     *
-     * @param request datos validados con el nuevo estado del tipo de servicio.
-     * @param id identificador del tipo de servicio a actualizar.
-     * @return 200 OK con el tipo de servicio actualizado.
      */
     @PutMapping("/{id}")
     public ResponseEntity<ServiceTypeResponse> update(@RequestBody @Valid ServiceTypeRequest request, @PathVariable Long id){

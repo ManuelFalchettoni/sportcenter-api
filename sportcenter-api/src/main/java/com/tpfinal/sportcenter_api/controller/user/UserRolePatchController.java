@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.*;
 
 /**
  * Controlador REST administrativo para cambiar el rol de un usuario.
- * Ruta base: {@code /sportcenter/users}.
+ * Ruta base: /sportcenter/users.
  */
 @RestController
 @RequestMapping("/sportcenter/users")
@@ -24,10 +24,6 @@ public class UserRolePatchController {
 
     /**
      * Actualiza el rol del usuario indicado.
-     *
-     * @param id identificador del usuario a modificar.
-     * @param request body con el nuevo rol ({@code USER} o {@code ADMIN}).
-     * @return 200 OK con el usuario actualizado.
      */
     @PreAuthorize("hasRole('ADMIN')")
     @PatchMapping("/{id}/role")

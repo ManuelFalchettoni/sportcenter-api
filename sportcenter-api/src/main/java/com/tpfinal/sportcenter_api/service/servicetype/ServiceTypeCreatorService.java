@@ -18,9 +18,6 @@ public class ServiceTypeCreatorService {
 
     /**
      * Crea y persiste un nuevo tipo de servicio.
-     *
-     * @param request datos del tipo de servicio a crear.
-     * @return el tipo de servicio persistido con su ID generado.
      */
     public ServiceType create(ServiceTypeRequest request){
         return jpaServiceTypeRepository.save(ServiceTypeRequest.fromRequest(request));

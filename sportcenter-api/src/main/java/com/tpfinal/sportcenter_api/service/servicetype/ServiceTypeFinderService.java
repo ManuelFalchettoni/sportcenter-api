@@ -19,11 +19,6 @@ public class ServiceTypeFinderService {
 
     /**
      * Busca un tipo de servicio por su ID.
-     *
-     * @param id identificador del tipo de servicio.
-     * @return el tipo de servicio correspondiente.
-     * @throws com.tpfinal.sportcenter_api.exception.servicetype.ServiceTypeNotFoundException
-     *         si no existe.
      */
     public ServiceType find(Long id){
         ServiceType serviceType = jpaServiceTypeRepository.findById(id).orElseThrow(() -> new ServiceTypeNotFoundException(id));

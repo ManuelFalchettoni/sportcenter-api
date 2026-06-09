@@ -29,11 +29,6 @@ public class ProfessionalCreatorService {
 
     /**
      * Crea y persiste un nuevo profesional con los tipos de servicio indicados.
-     *
-     * @param request datos del profesional a crear.
-     * @return el profesional persistido con su ID generado.
-     * @throws com.tpfinal.sportcenter_api.exception.servicetype.ServiceTypeNotFoundException
-     *         si alguno de los IDs de servicio no existe.
      */
     public Professional create(ProfessionalRequest request) {
         Professional professional = ProfessionalRequest.fromRequest(request);

@@ -21,12 +21,6 @@ public class ServiceTypeUpdaterService {
 
     /**
      * Actualiza los datos del tipo de servicio identificado por el ID.
-     *
-     * @param request nuevos datos del tipo de servicio.
-     * @param id identificador del tipo de servicio a actualizar.
-     * @return el tipo de servicio persistido con sus cambios.
-     * @throws com.tpfinal.sportcenter_api.exception.servicetype.ServiceTypeNotFoundException
-     *         si no existe.
      */
     public ServiceType update(ServiceTypeRequest request, Long id){
         ServiceType serviceType = serviceTypeFinderService.find(id);

@@ -9,7 +9,7 @@ import org.springframework.stereotype.Service;
 /**
  * Servicio administrativo encargado de actualizar el rol de un usuario.
  * <p>
- * Está separado del flujo público ({@link UserUpdaterService}) para garantizar
+ * Está separado del flujo público (UserUpdaterService) para garantizar
  * que el cambio de rol solo pueda realizarse a través de un endpoint dedicado
  * (que en el futuro estará restringido a ADMIN).
  */
@@ -27,12 +27,6 @@ public class UserRoleUpdaterService {
 
     /**
      * Cambia el rol del usuario identificado por el ID.
-     *
-     * @param id identificador del usuario.
-     * @param request DTO con el nuevo rol.
-     * @return DTO de respuesta con el usuario actualizado.
-     * @throws com.tpfinal.sportcenter_api.exception.user.UserNotFoundException
-     *         si el usuario no existe.
      */
     public UserResponse updateRole(Long id, UserRoleUpdateRequest request) {
         User user = userFinderService.find(id);

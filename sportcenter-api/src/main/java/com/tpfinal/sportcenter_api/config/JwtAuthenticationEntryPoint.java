@@ -12,7 +12,7 @@ import java.io.IOException;
 import java.time.LocalDateTime;
 
 /**
- * Responde 401 en JSON con el mismo shape que usa {@code GlobalExceptionHandler}.
+ * Responde 401 en JSON con el mismo shape que usa GlobalExceptionHandler.
  * Construye el body a mano para no depender de Jackson (no viene en webmvc starter).
  */
 @Component

@@ -19,11 +19,6 @@ public class ProfessionalFinderService {
 
     /**
      * Busca un profesional por su ID.
-     *
-     * @param id identificador del profesional.
-     * @return el profesional correspondiente.
-     * @throws com.tpfinal.sportcenter_api.exception.professional.ProfessionalNotFoundException
-     *         si no existe.
      */
     public Professional find(Long id){
         Professional professional =  jpaProfessionalRepository.findById(id).orElseThrow(() -> new ProfessionalNotFoundException(id));

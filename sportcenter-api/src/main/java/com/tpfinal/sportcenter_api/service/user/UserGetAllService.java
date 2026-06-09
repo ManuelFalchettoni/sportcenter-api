@@ -19,9 +19,6 @@ public class UserGetAllService {
 
     /**
      * Devuelve la página de usuarios solicitada.
-     *
-     * @param pageable parámetros de paginación y ordenamiento.
-     * @return página con los usuarios correspondientes.
      */
     public Page<User> findAll(Pageable pageable) {
         return jpaUserRepository.findAll(pageable);

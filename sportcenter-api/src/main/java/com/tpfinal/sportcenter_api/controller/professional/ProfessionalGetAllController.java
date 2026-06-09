@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 /**
  * Controlador REST que expone el listado paginado de profesionales.
- * Ruta base: {@code /sportcenter/professionals}.
+ * Ruta base: /sportcenter/professionals.
  */
 @RestController
 @RequestMapping("/sportcenter/professionals")
@@ -24,9 +24,6 @@ public class ProfessionalGetAllController {
 
     /**
      * Lista profesionales en forma paginada.
-     *
-     * @param pageable parámetros de paginación y orden.
-     * @return 200 OK con la página de profesionales mapeados a DTO.
      */
     @GetMapping
     public ResponseEntity<Page<ProfessionalResponse>> findAll(Pageable pageable) {

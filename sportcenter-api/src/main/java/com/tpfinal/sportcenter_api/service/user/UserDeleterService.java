@@ -19,10 +19,6 @@ public class UserDeleterService {
 
     /**
      * Elimina el usuario con el ID indicado.
-     *
-     * @param id identificador del usuario.
-     * @throws com.tpfinal.sportcenter_api.exception.user.UserNotFoundException
-     *         si el usuario no existe.
      */
     public void delete(Long id) {
         User user = userFinderService.find(id);

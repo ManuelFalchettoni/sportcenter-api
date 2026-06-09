@@ -14,7 +14,7 @@ import java.time.LocalDateTime;
  * Servicio encargado de registrar nuevos usuarios.
  * <p>
  * Verifica unicidad de username y email, hashea la contraseña con
- * {@link PasswordEncoder} y establece la fecha de creación.
+ * PasswordEncoder y establece la fecha de creación.
  */
 @Service
 public class UserCreatorService {
@@ -28,11 +28,6 @@ public class UserCreatorService {
 
     /**
      * Crea y persiste un nuevo usuario.
-     *
-     * @param request datos del usuario a registrar (incluye contraseña en claro).
-     * @return el usuario persistido con su ID generado y contraseña hasheada.
-     * @throws com.tpfinal.sportcenter_api.exception.user.UserAlreadyExistsException
-     *         si ya existe un usuario con el mismo username o email.
      */
     public User create(UserRequest request) {
         // Password es opcional en el DTO (para soportar el PUT), pero obligatoria al crear.

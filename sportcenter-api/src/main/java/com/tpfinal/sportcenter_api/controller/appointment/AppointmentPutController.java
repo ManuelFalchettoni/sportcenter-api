@@ -22,10 +22,6 @@ public class AppointmentPutController {
 
     /**
      * Actualiza un turno existente.
-     *
-     * @param id identificador del turno a actualizar.
-     * @param request datos validados con el nuevo estado del turno.
-     * @return 200 OK con el turno actualizado.
      */
     @PutMapping("/{id}")
     public ResponseEntity<AppointmentResponse> update(@PathVariable Long id,

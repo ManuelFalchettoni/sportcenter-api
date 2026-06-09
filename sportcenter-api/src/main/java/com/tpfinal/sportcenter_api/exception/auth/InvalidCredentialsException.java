@@ -8,7 +8,7 @@ package com.tpfinal.sportcenter_api.exception.auth;
  * "contraseña incorrecta". Si diéramos errores distintos, un atacante podría
  * deducir qué emails están registrados (enumeración de usuarios). El status
  * (401) y el body uniforme los asigna
- * {@link com.tpfinal.sportcenter_api.exception.GlobalExceptionHandler}.
+ * GlobalExceptionHandler.
  */
 public class InvalidCredentialsException extends RuntimeException {
 

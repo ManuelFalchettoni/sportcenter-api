@@ -19,9 +19,6 @@ public class ServiceTypeGetAllService {
 
     /**
      * Devuelve la página de tipos de servicio solicitada.
-     *
-     * @param pageable parámetros de paginación y ordenamiento.
-     * @return página con los tipos de servicio correspondientes.
      */
     public Page<ServiceType> findAll(Pageable pageable) {
         return jpaServiceTypeRepository.findAll(pageable);

@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.*;
 
 /**
  * Controlador REST que expone la actualización de profesionales.
- * Ruta base: {@code /sportcenter/professionals}.
+ * Ruta base: /sportcenter/professionals.
  */
 @RestController
 @RequestMapping("/sportcenter/professionals")
@@ -24,10 +24,6 @@ public class ProfessionalPutController {
     }
     /**
      * Actualiza un profesional existente.
-     *
-     * @param request datos validados con el nuevo estado del profesional.
-     * @param id identificador del profesional a actualizar.
-     * @return 200 OK con el profesional actualizado.
      */
     @PutMapping("/{id}")
     public ResponseEntity<ProfessionalResponse> update(@RequestBody @Valid ProfessionalRequest request, @PathVariable Long id){

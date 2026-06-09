@@ -12,7 +12,7 @@ import java.net.URI;
 
 /**
  * Controlador REST que expone el alta de profesionales.
- * Ruta base: {@code /sportcenter/professionals}.
+ * Ruta base: /sportcenter/professionals.
  */
 @RestController
 @RequestMapping("/sportcenter/professionals")
@@ -26,10 +26,7 @@ public class ProfessionalPostController {
     /**
      * Crea un nuevo profesional.
      * <p>
-     * La respuesta incluye el header {@code Location} apuntando al recurso creado.
-     *
-     * @param request datos validados del profesional.
-     * @return 201 Created con el profesional persistido en el cuerpo.
+     * La respuesta incluye el header Location apuntando al recurso creado.
      */
     @PostMapping
     public ResponseEntity<ProfessionalResponse> create(@RequestBody @Valid ProfessionalRequest request){

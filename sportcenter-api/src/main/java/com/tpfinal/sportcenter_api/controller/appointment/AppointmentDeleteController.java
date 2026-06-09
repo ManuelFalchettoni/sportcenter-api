@@ -19,9 +19,6 @@ public class AppointmentDeleteController {
 
     /**
      * Elimina el turno indicado.
-     *
-     * @param id identificador del turno.
-     * @return 204 No Content si se eliminó correctamente.
      */
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {

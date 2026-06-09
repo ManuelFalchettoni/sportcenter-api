@@ -19,10 +19,6 @@ public class ServiceTypeDeleterService {
 
     /**
      * Elimina el tipo de servicio con el ID indicado.
-     *
-     * @param id identificador del tipo de servicio.
-     * @throws com.tpfinal.sportcenter_api.exception.servicetype.ServiceTypeNotFoundException
-     *         si el tipo de servicio no existe.
      */
     public void delete(Long id){
         ServiceType serviceType = serviceTypeFinderService.find(id);

@@ -19,10 +19,6 @@ public class ProfessionalDeleterService {
 
     /**
      * Elimina el profesional con el ID indicado.
-     *
-     * @param id identificador del profesional.
-     * @throws com.tpfinal.sportcenter_api.exception.professional.ProfessionalNotFoundException
-     *         si el profesional no existe.
      */
     public void delete(Long id){
         Professional professional = professionalFinderService.find(id);

@@ -19,11 +19,6 @@ public class UserFinderService {
 
     /**
      * Busca un usuario por su ID.
-     *
-     * @param id identificador del usuario.
-     * @return el usuario correspondiente.
-     * @throws com.tpfinal.sportcenter_api.exception.user.UserNotFoundException
-     *         si no existe.
      */
     public User find(Long id) {
         return jpaUserRepository.findById(id)

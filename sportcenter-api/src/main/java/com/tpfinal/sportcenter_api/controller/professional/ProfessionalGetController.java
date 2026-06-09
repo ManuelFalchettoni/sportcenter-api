@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 /**
  * Controlador REST que expone la consulta de un profesional por ID.
- * Ruta base: {@code /sportcenter/professionals}.
+ * Ruta base: /sportcenter/professionals.
  */
 @RestController
 @RequestMapping("/sportcenter/professionals")
@@ -22,9 +22,6 @@ public class ProfessionalGetController {
     }
     /**
      * Obtiene un profesional por su ID.
-     *
-     * @param id identificador del profesional.
-     * @return 200 OK con el profesional encontrado.
      */
     @GetMapping("/{id}")
     public ResponseEntity<ProfessionalResponse> find(@PathVariable Long id){

@@ -18,9 +18,6 @@ public class AppointmentGetAllService {
     }
     /**
      * Devuelve la página de turnos solicitada.
-     *
-     * @param pageable parámetros de paginación y ordenamiento.
-     * @return página con los turnos correspondientes.
      */
     public Page<Appointment> findAll(Pageable pageable) {
         return jpaAppointmentRepository.findAll(pageable);

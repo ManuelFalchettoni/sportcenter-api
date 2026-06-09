@@ -22,11 +22,6 @@ public class AppointmentFinderService {
 
     /**
      * Busca un turno por su identificador.
-     *
-     * @param id identificador del turno.
-     * @return el turno correspondiente.
-     * @throws com.tpfinal.sportcenter_api.exception.appointment.AppointmentNotFoundException
-     *         si el turno no existe.
      */
     public Appointment find(Long id){
         Appointment appointment = jpaAppointmentRepository.findById(id)
