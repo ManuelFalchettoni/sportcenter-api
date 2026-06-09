@@ -1,6 +1,7 @@
 package com.tpfinal.sportcenter_api.controller.appointment;
 
 import com.tpfinal.sportcenter_api.config.JwtService;
+import com.tpfinal.sportcenter_api.config.UserPrincipal;
 import com.tpfinal.sportcenter_api.dto.request.appointment.AppointmentRequest;
 import com.tpfinal.sportcenter_api.entity.appointment.Appointment;
 import com.tpfinal.sportcenter_api.entity.professional.Professional;
@@ -10,11 +11,16 @@ import com.tpfinal.sportcenter_api.enums.user.UserEnum;
 import com.tpfinal.sportcenter_api.exception.appointment.AppointmentOverlapException;
 import com.tpfinal.sportcenter_api.exception.professional.ProfessionalNotFoundException;
 import com.tpfinal.sportcenter_api.service.appointment.AppointmentCreatorService;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.http.MediaType;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -39,23 +45,47 @@ class AppointmentPostControllerTest {
     @MockitoBean
     private AppointmentCreatorService appointmentCreatorService;
 
-    // JwtFilter (un Filter) se registra en el contexto de @WebMvcTest y exige JwtService.
+    // JwtFilter (un Filter) se registra en el contexto de @WebMvcTest y exige
+    // JwtService y UserDetailsService.
     @MockitoBean
     private JwtService jwtService;
+    @MockitoBean
+    private UserDetailsService userDetailsService;
 
     // Horario válido a futuro, reutilizado por los tests.
     private final LocalDateTime start = LocalDateTime.now().plusDays(1);
     private final LocalDateTime end = start.plusHours(1);
 
+    // Usuario autenticado de los tests: el dueño de los turnos creados.
+    private final User authenticatedUser =
+            new User(1L, "juan", "juan@mail.com", "hash", UserEnum.USER, LocalDateTime.now());
+
+    // Con addFilters=false el JwtFilter no corre, así que ponemos la
+    // autenticación a mano en el SecurityContext para que
+    // @AuthenticationPrincipal UserPrincipal resuelva en el controller.
+    @BeforeEach
+    void setUpAuthentication() {
+        UserPrincipal principal = new UserPrincipal(authenticatedUser);
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken(principal, null, principal.getAuthorities()));
+    }
+
+    // Limpiamos el contexto para no contaminar otros tests del mismo hilo.
+    @AfterEach
+    void clearAuthentication() {
+        SecurityContextHolder.clearContext();
+    }
+
     // Construimos el JSON a mano para no depender de la config de Jackson para java.time.
     // %s se reemplaza por cada valor ya formateado (con o sin comillas según el tipo).
+    // El dueño ya no viaja en el body: sale del usuario autenticado.
     private String appointmentJson(LocalDateTime startTime, LocalDateTime endTime,
-                                   String notes, Long userId, Long professionalId, Long serviceTypeId) {
+                                   String notes, Long professionalId, Long serviceTypeId) {
         return """
-                {"startTime":%s,"endTime":%s,"notes":%s,"userId":%s,"professionalId":%s,"serviceTypeId":%s}
+                {"startTime":%s,"endTime":%s,"notes":%s,"professionalId":%s,"serviceTypeId":%s}
                 """.formatted(
                 quote(startTime), quote(endTime), quote(notes),
-                nullable(userId), nullable(professionalId), nullable(serviceTypeId));
+                nullable(professionalId), nullable(serviceTypeId));
     }
 
     // Helpers que formatean cada campo a su forma JSON (null va sin comillas).
@@ -73,17 +103,16 @@ class AppointmentPostControllerTest {
 
     // JSON con todos los datos válidos.
     private String validJson() {
-        return appointmentJson(start, end, "una nota", 1L, 2L, 3L);
+        return appointmentJson(start, end, "una nota", 2L, 3L);
     }
 
     // Turno "ya guardado" que devolverá el servicio mockeado en el caso feliz.
     private Appointment persistedAppointment() {
-        User user = new User(1L, "juan", "juan@mail.com", "hash", UserEnum.USER, LocalDateTime.now());
         Professional professional = new Professional("Dr. House", "Clinica", true);
         professional.setId(2L);
         ServiceType serviceType = new ServiceType("Masaje", 60, new BigDecimal("100.00"));
         serviceType.setId(3L);
-        Appointment appointment = new Appointment(start, end, "una nota", user, professional, serviceType);
+        Appointment appointment = new Appointment(start, end, "una nota", authenticatedUser, professional, serviceType);
         appointment.setId(10L);
         appointment.setConfirmed(false);
         appointment.setCreatedAt(LocalDateTime.now());
@@ -93,7 +122,7 @@ class AppointmentPostControllerTest {
     // Alta OK -> 201 con el turno mapeado a DTO (incluye datos del profesional y servicio).
     @Test
     void create_returns201WithAppointmentResponse() throws Exception {
-        when(appointmentCreatorService.create(any(AppointmentRequest.class)))
+        when(appointmentCreatorService.create(any(AppointmentRequest.class), any(User.class)))
                 .thenReturn(persistedAppointment());
 
         mockMvc.perform(post("/sportcenter/appointments")
@@ -112,7 +141,7 @@ class AppointmentPostControllerTest {
     // Profesional inexistente -> el servicio lanza la excepción -> 404.
     @Test
     void create_returns404WhenProfessionalNotFound() throws Exception {
-        when(appointmentCreatorService.create(any(AppointmentRequest.class)))
+        when(appointmentCreatorService.create(any(AppointmentRequest.class), any(User.class)))
                 .thenThrow(new ProfessionalNotFoundException(2L));
 
         mockMvc.perform(post("/sportcenter/appointments")
@@ -126,7 +155,7 @@ class AppointmentPostControllerTest {
     // Solapamiento (doble reserva) -> 409.
     @Test
     void create_returns409WhenAppointmentsOverlap() throws Exception {
-        when(appointmentCreatorService.create(any(AppointmentRequest.class)))
+        when(appointmentCreatorService.create(any(AppointmentRequest.class), any(User.class)))
                 .thenThrow(new AppointmentOverlapException(2L));
 
         mockMvc.perform(post("/sportcenter/appointments")
@@ -140,7 +169,7 @@ class AppointmentPostControllerTest {
     @Test
     void create_returns400WhenServiceThrowsIllegalArgument() throws Exception {
         // El servicio valida endTime > startTime y lanza IllegalArgumentException -> 400.
-        when(appointmentCreatorService.create(any(AppointmentRequest.class)))
+        when(appointmentCreatorService.create(any(AppointmentRequest.class), any(User.class)))
                 .thenThrow(new IllegalArgumentException("endTime must be after startTime"));
 
         mockMvc.perform(post("/sportcenter/appointments")
@@ -153,15 +182,15 @@ class AppointmentPostControllerTest {
     // Campos obligatorios faltantes -> validación @NotNull del DTO -> 400.
     @Test
     void create_returns400WhenRequiredFieldsAreMissing() throws Exception {
-        // startTime null + userId null violan @NotNull antes de llegar al servicio.
-        String invalid = appointmentJson(null, end, "nota", null, 2L, 3L);
+        // startTime null + professionalId null violan @NotNull antes de llegar al servicio.
+        String invalid = appointmentJson(null, end, "nota", null, 3L);
 
         mockMvc.perform(post("/sportcenter/appointments")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(invalid))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.errors.startTime").exists())
-                .andExpect(jsonPath("$.errors.userId").exists());
+                .andExpect(jsonPath("$.errors.professionalId").exists());
     }
 
     // Fechas en el pasado -> validación @Future del DTO -> 400.
@@ -169,7 +198,7 @@ class AppointmentPostControllerTest {
     void create_returns400WhenDatesAreInThePast() throws Exception {
         // @Future: fechas pasadas deben rechazarse en la validación del DTO.
         LocalDateTime past = LocalDateTime.now().minusDays(1);
-        String invalid = appointmentJson(past, past.plusHours(1), "nota", 1L, 2L, 3L);
+        String invalid = appointmentJson(past, past.plusHours(1), "nota", 2L, 3L);
 
         mockMvc.perform(post("/sportcenter/appointments")
                         .contentType(MediaType.APPLICATION_JSON)

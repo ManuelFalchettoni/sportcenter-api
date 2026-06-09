@@ -9,11 +9,9 @@ import com.tpfinal.sportcenter_api.enums.user.UserEnum;
 import com.tpfinal.sportcenter_api.exception.appointment.AppointmentOverlapException;
 import com.tpfinal.sportcenter_api.exception.professional.ProfessionalNotFoundException;
 import com.tpfinal.sportcenter_api.exception.servicetype.ServiceTypeNotFoundException;
-import com.tpfinal.sportcenter_api.exception.user.UserNotFoundException;
 import com.tpfinal.sportcenter_api.repository.appointment.JpaAppointmentRepository;
 import com.tpfinal.sportcenter_api.repository.professional.JpaProfessionalRepository;
 import com.tpfinal.sportcenter_api.repository.servicetype.JpaServiceTypeRepository;
-import com.tpfinal.sportcenter_api.repository.user.JpaUserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -37,25 +35,25 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class AppointmentCreatorServiceTest {
 
-    // El servicio de creación depende de cuatro repositorios. Los reemplazamos
+    // El servicio de creación depende de tres repositorios. Los reemplazamos
     // por mocks para probar la lógica del servicio sin tocar la base de datos.
+    // Ya no hay JpaUserRepository: el dueño llega como parámetro (lo carga
+    // JwtFilter desde el usuario autenticado).
     @Mock
     private JpaAppointmentRepository jpaAppointmentRepository;
-    @Mock
-    private JpaUserRepository jpaUserRepository;
     @Mock
     private JpaProfessionalRepository jpaProfessionalRepository;
     @Mock
     private JpaServiceTypeRepository jpaServiceTypeRepository;
 
-    // Objeto bajo prueba: Mockito le inyecta los cuatro mocks de arriba.
+    // Objeto bajo prueba: Mockito le inyecta los mocks de arriba.
     @InjectMocks
     private AppointmentCreatorService service;
 
     // Datos compartidos por los tests; se rearman antes de cada uno en setUp().
     private LocalDateTime start;
     private LocalDateTime end;
-    private User user;
+    private User owner;
     private Professional professional;
     private ServiceType serviceType;
 
@@ -65,7 +63,7 @@ class AppointmentCreatorServiceTest {
     void setUp() {
         start = LocalDateTime.now().plusDays(1); // un horario a futuro
         end = start.plusHours(1);                // que termina 1 hora después
-        user = new User(1L, "juan", "juan@mail.com", "hash", UserEnum.USER, LocalDateTime.now());
+        owner = new User(1L, "juan", "juan@mail.com", "hash", UserEnum.USER, LocalDateTime.now());
         professional = new Professional("Dr. House", "Clinica", true);
         professional.setId(2L);
         serviceType = new ServiceType("Masaje", 60, new BigDecimal("100.00"));
@@ -73,29 +71,28 @@ class AppointmentCreatorServiceTest {
     }
 
     // Helper para no repetir la construcción del request en cada test.
-    // Los ids (1, 2, 3) coinciden con los de user, professional y serviceType.
+    // Los ids (2, 3) coinciden con professional y serviceType; el dueño
+    // ya no viaja en el request.
     private AppointmentRequest request() {
-        return new AppointmentRequest(start, end, "una nota", 1L, 2L, 3L);
+        return new AppointmentRequest(start, end, "una nota", 2L, 3L);
     }
 
-    // Caso feliz: con datos válidos, el turno se guarda como NO confirmado y con
-    // fecha de creación seteada.
+    // Caso feliz: con datos válidos, el turno se guarda como NO confirmado, con
+    // fecha de creación seteada y a nombre del owner recibido.
     @Test
     void create_persistsAppointmentAsUnconfirmedWithCreatedAt() {
-        // Arrange: que las tres búsquedas encuentren sus entidades...
-        when(jpaUserRepository.findById(1L)).thenReturn(Optional.of(user));
+        // Arrange: que las dos búsquedas encuentren sus entidades...
         when(jpaProfessionalRepository.findById(2L)).thenReturn(Optional.of(professional));
         when(jpaServiceTypeRepository.findById(3L)).thenReturn(Optional.of(serviceType));
         // ...y que no exista solapamiento (false = el horario está libre).
         when(jpaAppointmentRepository.existsByProfessionalIdAndStartTimeBeforeAndEndTimeAfterAndCancelledFalse(2L, end, start))
                 .thenReturn(false);
         // save(...) devuelve el mismo objeto que recibe (simulamos el guardado).
-        // getArgument(0) = el primer argumento con el que se llamó a save.
         when(jpaAppointmentRepository.save(any(Appointment.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
 
         // Act: ejecutamos lo que queremos probar.
-        Appointment result = service.create(request());
+        Appointment result = service.create(request(), owner);
 
         // Assert: capturamos el turno que el servicio le pasó a save() para
         // inspeccionar sus campos. ArgumentCaptor "atrapa" ese argumento.
@@ -107,7 +104,7 @@ class AppointmentCreatorServiceTest {
         assertThat(saved.getStartTime()).isEqualTo(start);
         assertThat(saved.getEndTime()).isEqualTo(end);
         assertThat(saved.getNotes()).isEqualTo("una nota");
-        assertThat(saved.getUser()).isSameAs(user);
+        assertThat(saved.getUser()).isSameAs(owner); // el dueño es el autenticado
         assertThat(saved.getProfessional()).isSameAs(professional);
         assertThat(saved.getServiceType()).isSameAs(serviceType);
         assertThat(saved.getConfirmed()).isFalse();      // nace sin confirmar
@@ -120,9 +117,9 @@ class AppointmentCreatorServiceTest {
     @Test
     void create_rejectsRangeWhenEndIsNotAfterStart() {
         // start == start: rango inválido (dura 0 minutos).
-        AppointmentRequest req = new AppointmentRequest(start, start, "nota", 1L, 2L, 3L);
+        AppointmentRequest req = new AppointmentRequest(start, start, "nota", 2L, 3L);
 
-        assertThatThrownBy(() -> service.create(req))
+        assertThatThrownBy(() -> service.create(req, owner))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("endTime must be after startTime");
 
@@ -130,25 +127,12 @@ class AppointmentCreatorServiceTest {
         verify(jpaAppointmentRepository, never()).save(any());
     }
 
-    // Si el usuario no existe, se corta antes de guardar.
-    @Test
-    void create_throwsWhenUserNotFound() {
-        // Optional.empty() simula "no encontrado".
-        when(jpaUserRepository.findById(1L)).thenReturn(Optional.empty());
-
-        assertThatThrownBy(() -> service.create(request()))
-                .isInstanceOf(UserNotFoundException.class);
-
-        verify(jpaAppointmentRepository, never()).save(any());
-    }
-
     // Si el profesional no existe, se corta antes de guardar.
     @Test
     void create_throwsWhenProfessionalNotFound() {
-        when(jpaUserRepository.findById(1L)).thenReturn(Optional.of(user));
         when(jpaProfessionalRepository.findById(2L)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> service.create(request()))
+        assertThatThrownBy(() -> service.create(request(), owner))
                 .isInstanceOf(ProfessionalNotFoundException.class);
 
         verify(jpaAppointmentRepository, never()).save(any());
@@ -157,11 +141,10 @@ class AppointmentCreatorServiceTest {
     // Si el tipo de servicio no existe, se corta antes de guardar.
     @Test
     void create_throwsWhenServiceTypeNotFound() {
-        when(jpaUserRepository.findById(1L)).thenReturn(Optional.of(user));
         when(jpaProfessionalRepository.findById(2L)).thenReturn(Optional.of(professional));
         when(jpaServiceTypeRepository.findById(3L)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> service.create(request()))
+        assertThatThrownBy(() -> service.create(request(), owner))
                 .isInstanceOf(ServiceTypeNotFoundException.class);
 
         verify(jpaAppointmentRepository, never()).save(any());
@@ -170,14 +153,13 @@ class AppointmentCreatorServiceTest {
     // Doble reserva: si el profesional ya tiene un turno solapado, se rechaza.
     @Test
     void create_throwsWhenProfessionalHasOverlappingAppointment() {
-        when(jpaUserRepository.findById(1L)).thenReturn(Optional.of(user));
         when(jpaProfessionalRepository.findById(2L)).thenReturn(Optional.of(professional));
         when(jpaServiceTypeRepository.findById(3L)).thenReturn(Optional.of(serviceType));
         // true = ya hay un turno que pisa este horario.
         when(jpaAppointmentRepository.existsByProfessionalIdAndStartTimeBeforeAndEndTimeAfterAndCancelledFalse(2L, end, start))
                 .thenReturn(true);
 
-        assertThatThrownBy(() -> service.create(request()))
+        assertThatThrownBy(() -> service.create(request(), owner))
                 .isInstanceOf(AppointmentOverlapException.class);
 
         verify(jpaAppointmentRepository, never()).save(any());

@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.http.MediaType;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -42,9 +43,11 @@ class AuthLoginControllerTest {
     private LoginService loginService;
 
     // JwtFilter es un Filter y se registra en el contexto de @WebMvcTest, así que
-    // hay que satisfacer su dependencia aunque los filtros estén desactivados.
+    // hay que satisfacer sus dependencias aunque los filtros estén desactivados.
     @MockitoBean
     private JwtService jwtService;
+    @MockitoBean
+    private UserDetailsService userDetailsService;
 
     // Login OK -> 200 con el token en el cuerpo.
     @Test

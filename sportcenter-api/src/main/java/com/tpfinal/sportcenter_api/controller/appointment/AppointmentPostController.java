@@ -1,5 +1,6 @@
 package com.tpfinal.sportcenter_api.controller.appointment;
 
+import com.tpfinal.sportcenter_api.config.UserPrincipal;
 import com.tpfinal.sportcenter_api.dto.request.appointment.AppointmentRequest;
 import com.tpfinal.sportcenter_api.dto.response.appointment.AppointmentResponse;
 import com.tpfinal.sportcenter_api.entity.appointment.Appointment;
@@ -7,6 +8,7 @@ import com.tpfinal.sportcenter_api.service.appointment.AppointmentCreatorService
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -26,11 +28,12 @@ public class AppointmentPostController {
     }
 
     /**
-     * Crea un nuevo turno.
+     * Crea un nuevo turno a nombre del usuario autenticado.
      */
     @PostMapping
-    public ResponseEntity<AppointmentResponse> create(@Valid @RequestBody AppointmentRequest request){
-        Appointment appointment = appointmentCreatorService.create(request);
+    public ResponseEntity<AppointmentResponse> create(@Valid @RequestBody AppointmentRequest request,
+                                                      @AuthenticationPrincipal UserPrincipal principal){
+        Appointment appointment = appointmentCreatorService.create(request, principal.getUser());
         return ResponseEntity.status(HttpStatus.CREATED).body(AppointmentResponse.toResponse(appointment));
     }
 }

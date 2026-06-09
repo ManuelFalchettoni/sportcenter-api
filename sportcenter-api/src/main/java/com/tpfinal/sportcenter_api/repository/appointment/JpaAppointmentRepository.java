@@ -1,6 +1,8 @@
 package com.tpfinal.sportcenter_api.repository.appointment;
 
 import com.tpfinal.sportcenter_api.entity.appointment.Appointment;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Repository;
@@ -29,4 +31,10 @@ public interface JpaAppointmentRepository extends
      */
     boolean existsByProfessionalIdAndStartTimeBeforeAndEndTimeAfterAndIdNotAndCancelledFalse(
             Long professionalId, LocalDateTime endTime, LocalDateTime startTime, Long id);
+
+    /**
+     * Turnos de un usuario, paginados. Lo usa el listado cuando el caller
+     * no es ADMIN: cada uno ve solo sus propios turnos.
+     */
+    Page<Appointment> findByUserId(Long userId, Pageable pageable);
 }

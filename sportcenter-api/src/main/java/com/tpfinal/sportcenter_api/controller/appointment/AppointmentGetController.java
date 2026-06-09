@@ -1,9 +1,11 @@
 package com.tpfinal.sportcenter_api.controller.appointment;
 
+import com.tpfinal.sportcenter_api.config.UserPrincipal;
 import com.tpfinal.sportcenter_api.dto.response.appointment.AppointmentResponse;
 import com.tpfinal.sportcenter_api.entity.appointment.Appointment;
 import com.tpfinal.sportcenter_api.service.appointment.AppointmentFinderService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -23,11 +25,12 @@ public class AppointmentGetController {
     }
 
     /**
-     * Obtiene un turno por su ID.
+     * Obtiene un turno por su ID. Solo el dueño o un ADMIN.
      */
     @GetMapping("/{id}")
-    public ResponseEntity<AppointmentResponse> find(@PathVariable Long id){
-        Appointment appointment = appointmentFinderService.find(id);
+    public ResponseEntity<AppointmentResponse> find(@PathVariable Long id,
+                                                    @AuthenticationPrincipal UserPrincipal principal){
+        Appointment appointment = appointmentFinderService.find(id, principal.getUser());
         return ResponseEntity.ok(AppointmentResponse.toResponse(appointment));
     }
 }

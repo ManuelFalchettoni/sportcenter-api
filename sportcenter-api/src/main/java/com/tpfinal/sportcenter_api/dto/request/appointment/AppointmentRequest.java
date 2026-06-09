@@ -20,9 +20,8 @@ public class AppointmentRequest {
     @Size(max = 500)
     private String notes;
 
-    @NotNull
-    @Positive
-    private Long userId;
+    // El dueño del turno no viaja en el body: se toma del usuario autenticado
+    // (UserPrincipal). Así nadie puede reservar a nombre de otro.
 
     @NotNull
     @Positive
@@ -35,11 +34,10 @@ public class AppointmentRequest {
     public AppointmentRequest(){}
 
     public AppointmentRequest(LocalDateTime startTime, LocalDateTime endTime, String notes,
-                              Long userId, Long professionalId, Long serviceTypeId) {
+                              Long professionalId, Long serviceTypeId) {
         this.startTime = startTime;
         this.endTime = endTime;
         this.notes = notes;
-        this.userId = userId;
         this.professionalId = professionalId;
         this.serviceTypeId = serviceTypeId;
     }
@@ -66,14 +64,6 @@ public class AppointmentRequest {
 
     public void setNotes(String notes) {
         this.notes = notes;
-    }
-
-    public Long getUserId() {
-        return userId;
-    }
-
-    public void setUserId(Long userId) {
-        this.userId = userId;
     }
 
     public Long getProfessionalId() {

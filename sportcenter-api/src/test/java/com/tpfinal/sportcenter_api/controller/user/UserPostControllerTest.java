@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.http.MediaType;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -36,9 +37,12 @@ class UserPostControllerTest {
     @MockitoBean
     private UserCreatorService userCreatorService; // servicio mockeado
 
-    // JwtFilter (un Filter) se registra en el contexto de @WebMvcTest y exige JwtService.
+    // JwtFilter (un Filter) se registra en el contexto de @WebMvcTest y exige
+    // JwtService y UserDetailsService.
     @MockitoBean
     private JwtService jwtService;
+    @MockitoBean
+    private UserDetailsService userDetailsService;
 
     // Alta OK -> 201 con el usuario en el cuerpo (y SIN exponer la contraseña).
     @Test

@@ -1,7 +1,9 @@
 package com.tpfinal.sportcenter_api.controller.appointment;
 
+import com.tpfinal.sportcenter_api.config.UserPrincipal;
 import com.tpfinal.sportcenter_api.service.appointment.AppointmentDeleterService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 /**
@@ -18,11 +20,12 @@ public class AppointmentDeleteController {
     }
 
     /**
-     * Elimina el turno indicado.
+     * Elimina el turno indicado. Solo el dueño o un ADMIN.
      */
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
-        appointmentDeleterService.delete(id);
+    public ResponseEntity<Void> delete(@PathVariable Long id,
+                                       @AuthenticationPrincipal UserPrincipal principal) {
+        appointmentDeleterService.delete(id, principal.getUser());
         return ResponseEntity.noContent().build();
     }
 }

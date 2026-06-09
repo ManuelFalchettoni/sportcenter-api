@@ -218,22 +218,24 @@ Turno reservado entre un usuario y un profesional para un tipo de servicio deter
 | `cancelledAt`  | LocalDateTime | Nullable. Se setea al momento de cancelar el turno           |
 | `notes`        | String        | Opcional, `@Size(max = 500)`                                 |
 | `createdAt`    | LocalDateTime | Generado por el servidor, no editable                        |
-| `user`         | User          | `@ManyToOne`, requerido — `userId` `@NotNull` `@Positive`         |
+| `user`         | User          | `@ManyToOne`, requerido — siempre el usuario autenticado que creó el turno |
 | `professional` | Professional  | `@ManyToOne`, requerido — `professionalId` `@NotNull` `@Positive` |
 | `serviceType`  | ServiceType   | `@ManyToOne`, requerido — `serviceTypeId` `@NotNull` `@Positive`  |
 
 #### Endpoints — base: `/sportcenter/appointments`
 
-| Método | Path                  | Descripción                       | Acceso      | Respuesta                              |
-|--------|-----------------------|-----------------------------------|-------------|----------------------------------------|
-| GET    | `/{id}`               | Obtiene un turno por id           | Autenticado | `200 OK` · `AppointmentResponse`       |
-| GET    | `?page=&size=&sort=`  | Lista paginada                    | Autenticado | `200 OK` · `Page<AppointmentResponse>` |
-| POST   | `/`                   | Crea un turno                     | Autenticado | `201 Created` · `AppointmentResponse`  |
-| PUT    | `/{id}`               | Actualiza un turno                | Autenticado | `200 OK` · `AppointmentResponse`       |
-| PATCH  | `/{id}/cancel`        | Cancela un turno (soft delete)    | Autenticado | `200 OK` · `AppointmentResponse`       |
-| DELETE | `/{id}`               | Elimina un turno                  | Autenticado | `204 No Content`                       |
+| Método | Path                  | Descripción                       | Acceso          | Respuesta                              |
+|--------|-----------------------|-----------------------------------|-----------------|----------------------------------------|
+| GET    | `/{id}`               | Obtiene un turno por id           | Dueño o ADMIN   | `200 OK` · `AppointmentResponse`       |
+| GET    | `?page=&size=&sort=`  | Lista paginada (ADMIN ve todos; USER solo los suyos) | Autenticado | `200 OK` · `Page<AppointmentResponse>` |
+| POST   | `/`                   | Crea un turno a nombre del autenticado | Autenticado | `201 Created` · `AppointmentResponse`  |
+| PUT    | `/{id}`               | Actualiza un turno                | Dueño o ADMIN   | `200 OK` · `AppointmentResponse`       |
+| PATCH  | `/{id}/cancel`        | Cancela un turno (soft delete)    | Dueño o ADMIN   | `200 OK` · `AppointmentResponse`       |
+| DELETE | `/{id}`               | Elimina un turno                  | Dueño o ADMIN   | `204 No Content`                       |
 
-> Pendiente: control de *ownership* — que un `USER` solo pueda operar sobre **sus** turnos. Hoy cualquier autenticado puede modificar turnos ajenos.
+##### Ownership
+
+El dueño de un turno es **siempre el usuario autenticado que lo creó**: el body no acepta `userId`, así nadie puede reservar a nombre de otro. Para operar sobre un turno existente, `AppointmentOwnershipValidator` exige ser el dueño o ADMIN; un tercero recibe `403 Forbidden`. El `PUT` no transfiere el turno: el dueño nunca cambia. En el listado, un `USER` ve únicamente sus turnos y un ADMIN ve todos.
 
 ##### Body de ejemplo (`POST` / `PUT`)
 
@@ -242,7 +244,6 @@ Turno reservado entre un usuario y un profesional para un tipo de servicio deter
   "startTime": "2026-07-10T10:00:00",
   "endTime": "2026-07-10T10:45:00",
   "notes": "Primera sesión",
-  "userId": 1,
   "professionalId": 2,
   "serviceTypeId": 3
 }
@@ -251,7 +252,7 @@ Turno reservado entre un usuario y un profesional para un tipo de servicio deter
 Reglas:
 
 - `endTime` debe ser estrictamente posterior a `startTime`; caso contrario responde `400 Bad Request`.
-- `userId`, `professionalId` y `serviceTypeId` deben referenciar entidades existentes; caso contrario `404 Not Found`.
+- `professionalId` y `serviceTypeId` deben referenciar entidades existentes; caso contrario `404 Not Found`.
 - **Sin doble reserva:** un profesional no puede tener dos turnos que se solapen. Si el rango pedido pisa otro turno del mismo profesional, responde `409 Conflict` (`AppointmentOverlapException`). En el `PUT`, el propio turno que se edita no cuenta como solapamiento.
 - En el `POST`, el turno se crea con `confirmed = false`, `cancelled = false` y `createdAt` se setea al momento actual.
 
@@ -338,7 +339,7 @@ Adicionalmente, Bean Validation está activado en los callbacks pre-persist y pr
 |--------|--------|
 | `400 Bad Request` | Validación del body (`@Valid`), JSON malformado, o reglas de negocio como `endTime <= startTime`. |
 | `401 Unauthorized` | Falta el token, o es inválido/expirado; o credenciales inválidas en el login. |
-| `403 Forbidden` | Autenticado pero sin permisos (p. ej. un no-ADMIN en `PATCH /{id}/role`). |
+| `403 Forbidden` | Autenticado pero sin permisos: un no-ADMIN en un endpoint de admin, o un usuario operando sobre un turno ajeno. |
 | `404 Not Found` | Recurso inexistente (usuario, profesional, service type o turno). |
 | `409 Conflict` | `username`/`email` duplicado, turno solapado, o turno ya cancelado. |
 | `500 Internal Server Error` | Error inesperado; el detalle se loguea en el servidor y **no** se expone al cliente. |
@@ -372,8 +373,8 @@ cd sportcenter-api
 
 **Tests unitarios de servicios** (Mockito puro sobre la capa de lógica de negocio):
 
-- `AppointmentCreatorServiceTest` / `AppointmentUpdaterServiceTest` — alta y actualización de turnos: rango horario inválido (`endTime <= startTime`), entidades inexistentes (user/professional/serviceType) y **detección de solapamiento** (incluyendo que un turno no choque consigo mismo en el `PUT`).
-- `AppointmentFinderServiceTest` / `UserFinderServiceTest` — recuperación por id y `NotFoundException`.
+- `AppointmentCreatorServiceTest` / `AppointmentUpdaterServiceTest` — alta y actualización de turnos: rango horario inválido (`endTime <= startTime`), entidades inexistentes (professional/serviceType), **detección de solapamiento** (incluyendo que un turno no choque consigo mismo en el `PUT`), que el turno se cree a nombre del usuario autenticado y que un caller ajeno sea rechazado (**ownership**).
+- `AppointmentFinderServiceTest` / `UserFinderServiceTest` — recuperación por id, `NotFoundException` y, en la variante con caller, el chequeo de ownership.
 - `JwtServiceTest` — generación y validación de tokens: token recién emitido válido, extracción del username (subject), rechazo de tokens basura, expirados o firmados con otra clave.
 - `LoginServiceTest` — login OK, normalización del email, `401` con credenciales inválidas y la **mitigación de timing** (verificación contra el hash señuelo cuando el email no existe).
 - `UserCreatorServiceTest` — normalización (trim/lowercase), hasheo de password, rol forzado a `USER` y `409` por username/email duplicado.
