@@ -12,12 +12,6 @@ import java.util.List;
  * Adaptador entre nuestra entidad User y el contrato UserDetails de
  * Spring Security. Envuelve la entidad en vez de hacer que User implemente
  * la interfaz, para que la capa de persistencia no dependa de seguridad.
- *
- * <p>Es lo que viaja como principal en el SecurityContext: los controllers
- * lo reciben con @AuthenticationPrincipal y acceden al usuario completo.
- *
- * <p>Los flags de estado de cuenta (isAccountNonLocked, isEnabled, etc.)
- * quedan en su default true: el modelo no maneja bloqueo ni expiración.
  */
 public class UserPrincipal implements UserDetails {
 

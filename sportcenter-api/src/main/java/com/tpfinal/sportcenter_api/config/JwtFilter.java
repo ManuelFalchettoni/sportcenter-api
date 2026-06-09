@@ -18,16 +18,10 @@ import java.io.IOException;
  * Filtro que extrae el JWT del header  Authorization: Bearer ...,
  * lo valida y, si es válido, carga el usuario real desde la base
  * (UserDetailsService) y deposita la Authentication en el
- * SecurityContextHolder para que el resto de Spring Security
- * (autorización, @PreAuthorize, @AuthenticationPrincipal) pueda operar.
- *
- * <p>El token solo prueba identidad: el rol y la existencia del usuario
- * se leen frescos de la DB en cada request. Así un usuario borrado o
+ * SecurityContextHolder para que el resto de Spring Security.
+ * El token solo prueba identidad: el rol y la existencia del usuario
+ * se leen de la DB en cada request. Así un usuario borrado o
  * con rol cambiado no sigue operando con un token viejo.
- *
- * <p>No rechaza requests sin token, con token inválido o de un usuario
- * inexistente: esa decisión la toma SecurityFilterChain según las reglas
- * de autorización configuradas. Si no hay autenticación cuando se exige,
  * responde JwtAuthenticationEntryPoint.
  */
 @Component

@@ -12,9 +12,6 @@ import org.springframework.stereotype.Service;
  * cada request autenticada: así el rol y la existencia del usuario se
  * verifican contra la DB y no contra lo que diga el token. Un usuario
  * borrado o degradado pierde acceso al instante, sin esperar la expiración.
- *
- * <p>Declarar este bean también desactiva el usuario en memoria con password
- * autogenerada que Spring Boot crea por defecto.
  */
 @Service
 public class CustomUserDetailsService implements UserDetailsService {

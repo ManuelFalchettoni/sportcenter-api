@@ -55,9 +55,21 @@ Si el email no existe **o** la contraseña es incorrecta, responde `401 Unauthor
 
 - **Públicas:** `/sportcenter/auth/**` (login) y el registro `POST /sportcenter/users`.
 - **Protegidas:** cualquier otra ruta requiere un token válido; sin él se responde `401 Unauthorized`.
-- **Solo ADMIN:** `PATCH /sportcenter/users/{id}/role` exige rol `ADMIN` (`@PreAuthorize("hasRole('ADMIN')")`); un usuario autenticado sin ese rol recibe `403 Forbidden`.
+- **Solo ADMIN** (`@PreAuthorize("hasRole('ADMIN')")` — un autenticado sin ese rol recibe `403 Forbidden`):
+  - Gestión de usuarios: listar, actualizar, borrar y cambiar rol. Ver un usuario por id permite además al **propio usuario** (`hasRole('ADMIN') or #id == principal.id`).
+  - Escrituras de profesionales y de tipos de servicio (`POST`/`PUT`/`DELETE`). Las lecturas quedan abiertas a cualquier autenticado, porque un `USER` las necesita para reservar turnos.
 
-El token lleva el `username` como subject y el rol como claim, y expira según `jwt.expiration` (1 hora por defecto). Las sesiones son *stateless*: no se guarda estado en el servidor.
+Cada tabla de endpoints indica el permiso requerido en la columna **Acceso**.
+
+#### Cómo se autentica cada request (JWT + UserDetails)
+
+El token lleva el `username` como subject y expira según `jwt.expiration` (1 hora por defecto). Las sesiones son *stateless*: no se guarda estado en el servidor.
+
+El token **solo prueba identidad**. En cada request, `JwtFilter` valida la firma, extrae el username y carga el usuario real desde la base (`CustomUserDetailsService` → `UserPrincipal`, el adaptador `UserDetails` que envuelve la entidad). El rol con el que se autoriza sale siempre de la DB, no del token; el claim `role` que viaja en el JWT es solo informativo para el cliente. Consecuencias:
+
+- Un usuario **borrado** pierde acceso al instante, aunque su token siga vigente (`401`).
+- Un **cambio de rol** (`PATCH /users/{id}/role`) tiene efecto inmediato, sin esperar a que expire el token.
+- Los controllers pueden recibir el usuario completo con `@AuthenticationPrincipal UserPrincipal`.
 
 ---
 
@@ -77,13 +89,13 @@ Profesional que presta servicios en el centro deportivo.
 
 #### Endpoints — base: `/sportcenter/professionals`
 
-| Método | Path                  | Descripción                       | Respuesta                      |
-|--------|-----------------------|-----------------------------------|--------------------------------|
-| GET    | `/{id}`               | Obtiene un profesional por id     | `200 OK` · `ProfessionalResponse` |
-| GET    | `?page=&size=&sort=`  | Lista paginada                    | `200 OK` · `Page<ProfessionalResponse>` |
-| POST   | `/`                   | Crea un profesional               | `201 Created` + header `Location` |
-| PUT    | `/{id}`               | Actualiza un profesional          | `200 OK` · `ProfessionalResponse` |
-| DELETE | `/{id}`               | Elimina un profesional            | `204 No Content`              |
+| Método | Path                  | Descripción                       | Acceso      | Respuesta                      |
+|--------|-----------------------|-----------------------------------|-------------|--------------------------------|
+| GET    | `/{id}`               | Obtiene un profesional por id     | Autenticado | `200 OK` · `ProfessionalResponse` |
+| GET    | `?page=&size=&sort=`  | Lista paginada                    | Autenticado | `200 OK` · `Page<ProfessionalResponse>` |
+| POST   | `/`                   | Crea un profesional               | ADMIN       | `201 Created` + header `Location` |
+| PUT    | `/{id}`               | Actualiza un profesional          | ADMIN       | `200 OK` · `ProfessionalResponse` |
+| DELETE | `/{id}`               | Elimina un profesional            | ADMIN       | `204 No Content`              |
 
 ##### Body de ejemplo (`POST` / `PUT`)
 
@@ -113,13 +125,13 @@ Tipo de servicio que ofrece el centro (ej: sesión de kinesiología, clase de yo
 
 #### Endpoints — base: `/sportcenter/service-types`
 
-| Método | Path                  | Descripción                       | Respuesta                      |
-|--------|-----------------------|-----------------------------------|--------------------------------|
-| GET    | `/{id}`               | Obtiene un service type por id    | `200 OK` · `ServiceTypeResponse` |
-| GET    | `?page=&size=&sort=`  | Lista paginada                    | `200 OK` · `Page<ServiceTypeResponse>` |
-| POST   | `/`                   | Crea un service type              | `201 Created` + header `Location` |
-| PUT    | `/{id}`               | Actualiza un service type         | `200 OK` · `ServiceTypeResponse` |
-| DELETE | `/{id}`               | Elimina un service type           | `204 No Content`              |
+| Método | Path                  | Descripción                       | Acceso      | Respuesta                      |
+|--------|-----------------------|-----------------------------------|-------------|--------------------------------|
+| GET    | `/{id}`               | Obtiene un service type por id    | Autenticado | `200 OK` · `ServiceTypeResponse` |
+| GET    | `?page=&size=&sort=`  | Lista paginada                    | Autenticado | `200 OK` · `Page<ServiceTypeResponse>` |
+| POST   | `/`                   | Crea un service type              | ADMIN       | `201 Created` + header `Location` |
+| PUT    | `/{id}`               | Actualiza un service type         | ADMIN       | `200 OK` · `ServiceTypeResponse` |
+| DELETE | `/{id}`               | Elimina un service type           | ADMIN       | `204 No Content`              |
 
 ##### Body de ejemplo (`POST` / `PUT`)
 
@@ -148,14 +160,14 @@ Usuario del sistema. La contraseña se almacena hasheada con BCrypt y nunca se d
 
 #### Endpoints — base: `/sportcenter/users`
 
-| Método | Path                  | Descripción                       | Respuesta                              |
-|--------|-----------------------|-----------------------------------|----------------------------------------|
-| GET    | `/{id}`               | Obtiene un usuario por id         | `200 OK` · `UserResponse`              |
-| GET    | `?page=&size=&sort=`  | Lista paginada                    | `200 OK` · `Page<UserResponse>`        |
-| POST   | `/`                   | Crea un usuario                   | `201 Created` · `UserResponse`         |
-| PUT    | `/{id}`               | Actualiza un usuario              | `200 OK` · `UserResponse`              |
-| PATCH  | `/{id}/role`          | **Admin**: cambia el rol          | `200 OK` · `UserResponse`              |
-| DELETE | `/{id}`               | Elimina un usuario                | `204 No Content`                       |
+| Método | Path                  | Descripción                       | Acceso              | Respuesta                              |
+|--------|-----------------------|-----------------------------------|---------------------|----------------------------------------|
+| GET    | `/{id}`               | Obtiene un usuario por id         | ADMIN o el propio usuario | `200 OK` · `UserResponse`        |
+| GET    | `?page=&size=&sort=`  | Lista paginada                    | ADMIN               | `200 OK` · `Page<UserResponse>`        |
+| POST   | `/`                   | Crea un usuario (registro)        | Público             | `201 Created` · `UserResponse`         |
+| PUT    | `/{id}`               | Actualiza un usuario              | ADMIN               | `200 OK` · `UserResponse`              |
+| PATCH  | `/{id}/role`          | Cambia el rol                     | ADMIN               | `200 OK` · `UserResponse`              |
+| DELETE | `/{id}`               | Elimina un usuario                | ADMIN               | `204 No Content`                       |
 
 Si `username` o `email` ya existen, responde `409 Conflict` (`UserAlreadyExistsException`).
 
@@ -171,7 +183,7 @@ Si `username` o `email` ya existen, responde `409 Conflict` (`UserAlreadyExistsE
 
 Notas:
 
-- `role` **no se acepta en el body** del `POST` ni del `PUT`. Todo usuario creado por esos endpoints queda con rol `USER`. El rol se modifica exclusivamente vía `PATCH /sportcenter/users/{id}/role` (ver más abajo), que en producción debe quedar restringido a administradores.
+- `role` **no se acepta en el body** del `POST` ni del `PUT`. Todo usuario creado por esos endpoints queda con rol `USER`. El rol se modifica exclusivamente vía `PATCH /sportcenter/users/{id}/role` (ver más abajo), restringido a administradores.
 - `email` se normaliza a minúsculas y `username` se trimea antes de comparar y persistir, así la unicidad no depende de capitalización ni espacios accidentales.
 - `password` debe tener entre 8 y 72 caracteres (límite superior por BCrypt, que trunca silenciosamente más allá de 72 bytes). En el `POST` es obligatoria. En el `PUT` se puede **omitir el campo** (enviarlo como `null` o no incluirlo) para no cambiar la clave; si se envía, debe respetar el rango 8–72.
 
@@ -187,6 +199,7 @@ Validaciones:
 
 - `role` es obligatorio (`@NotNull`) y debe ser uno de los valores del enum (`USER`, `ADMIN`).
 - **Endpoint restringido a administradores.** Protegido con `@PreAuthorize("hasRole('ADMIN')")` (method-level security): un usuario autenticado sin rol `ADMIN` recibe `403 Forbidden`, y sin token `401 Unauthorized`.
+- El cambio de rol tiene **efecto inmediato**: como el rol se carga desde la base en cada request (ver sección de autenticación), el usuario afectado no necesita reloguearse.
 - `createdDate` se setea automáticamente en el `POST` y no puede modificarse.
 
 ---
@@ -211,14 +224,16 @@ Turno reservado entre un usuario y un profesional para un tipo de servicio deter
 
 #### Endpoints — base: `/sportcenter/appointments`
 
-| Método | Path                  | Descripción                       | Respuesta                              |
-|--------|-----------------------|-----------------------------------|----------------------------------------|
-| GET    | `/{id}`               | Obtiene un turno por id           | `200 OK` · `AppointmentResponse`       |
-| GET    | `?page=&size=&sort=`  | Lista paginada                    | `200 OK` · `Page<AppointmentResponse>` |
-| POST   | `/`                   | Crea un turno                     | `201 Created` · `AppointmentResponse`  |
-| PUT    | `/{id}`               | Actualiza un turno                | `200 OK` · `AppointmentResponse`       |
-| PATCH  | `/{id}/cancel`        | Cancela un turno (soft delete)    | `200 OK` · `AppointmentResponse`       |
-| DELETE | `/{id}`               | Elimina un turno                  | `204 No Content`                       |
+| Método | Path                  | Descripción                       | Acceso      | Respuesta                              |
+|--------|-----------------------|-----------------------------------|-------------|----------------------------------------|
+| GET    | `/{id}`               | Obtiene un turno por id           | Autenticado | `200 OK` · `AppointmentResponse`       |
+| GET    | `?page=&size=&sort=`  | Lista paginada                    | Autenticado | `200 OK` · `Page<AppointmentResponse>` |
+| POST   | `/`                   | Crea un turno                     | Autenticado | `201 Created` · `AppointmentResponse`  |
+| PUT    | `/{id}`               | Actualiza un turno                | Autenticado | `200 OK` · `AppointmentResponse`       |
+| PATCH  | `/{id}/cancel`        | Cancela un turno (soft delete)    | Autenticado | `200 OK` · `AppointmentResponse`       |
+| DELETE | `/{id}`               | Elimina un turno                  | Autenticado | `204 No Content`                       |
+
+> Pendiente: control de *ownership* — que un `USER` solo pueda operar sobre **sus** turnos. Hoy cualquier autenticado puede modificar turnos ajenos.
 
 ##### Body de ejemplo (`POST` / `PUT`)
 
@@ -359,6 +374,7 @@ cd sportcenter-api
 
 - `AppointmentCreatorServiceTest` / `AppointmentUpdaterServiceTest` — alta y actualización de turnos: rango horario inválido (`endTime <= startTime`), entidades inexistentes (user/professional/serviceType) y **detección de solapamiento** (incluyendo que un turno no choque consigo mismo en el `PUT`).
 - `AppointmentFinderServiceTest` / `UserFinderServiceTest` — recuperación por id y `NotFoundException`.
+- `JwtServiceTest` — generación y validación de tokens: token recién emitido válido, extracción del username (subject), rechazo de tokens basura, expirados o firmados con otra clave.
 - `LoginServiceTest` — login OK, normalización del email, `401` con credenciales inválidas y la **mitigación de timing** (verificación contra el hash señuelo cuando el email no existe).
 - `UserCreatorServiceTest` — normalización (trim/lowercase), hasheo de password, rol forzado a `USER` y `409` por username/email duplicado.
 - `UserRoleUpdaterServiceTest` — cambio de rol y persistencia.
@@ -377,6 +393,8 @@ Cada entidad sigue la misma organización por carpetas:
 
 ```
 src/main/java/com/tpfinal/sportcenter_api/
+├── config/                     # Seguridad: SecurityConfig, JwtService, JwtFilter,
+│                               #   UserPrincipal, JwtAuthenticationEntryPoint
 ├── entity/<entidad>/           # Entidad JPA
 ├── dto/
 │   ├── request/<entidad>/      # Request DTO

@@ -13,11 +13,10 @@ import java.nio.charset.StandardCharsets;
 import java.util.Date;
 
 /**
- * Emisión y verificación de tokens JWT (HS256). API jjwt 0.12.6.
+ * Emisión y verificación de tokens JWT (HS256)
  *
- * <p>Subject = username. El claim "role" es informativo para el cliente:
+ * Subject = username. El claim "role" es informativo para el cliente:
  * el servidor autoriza con el rol cargado desde la DB
- * (CustomUserDetailsService), no con el del token.
  */
 @Service
 public class JwtService {
