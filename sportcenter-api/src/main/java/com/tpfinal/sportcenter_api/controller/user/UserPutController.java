@@ -5,6 +5,7 @@ import com.tpfinal.sportcenter_api.dto.response.user.UserResponse;
 import com.tpfinal.sportcenter_api.service.user.UserUpdaterService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 /**
@@ -23,6 +24,7 @@ public class UserPutController {
     /**
      * Actualiza un usuario existente.
      */
+    @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{id}")
     public ResponseEntity<UserResponse> update(@PathVariable Long id,
                                                @Valid @RequestBody UserRequest request) {

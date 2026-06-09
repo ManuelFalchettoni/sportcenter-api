@@ -4,6 +4,7 @@ import com.tpfinal.sportcenter_api.dto.response.user.UserResponse;
 import com.tpfinal.sportcenter_api.entity.user.User;
 import com.tpfinal.sportcenter_api.service.user.UserFinderService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -25,6 +26,7 @@ public class UserGetController {
     /**
      * Obtiene un usuario por su ID.
      */
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/{id}")
     public ResponseEntity<UserResponse> find(@PathVariable Long id) {
         User user = userFinderService.find(id);

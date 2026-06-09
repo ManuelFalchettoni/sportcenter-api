@@ -5,6 +5,7 @@ import com.tpfinal.sportcenter_api.dto.response.servicetype.ServiceTypeResponse;
 import com.tpfinal.sportcenter_api.service.servicetype.ServiceTypeCreatorService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
@@ -28,6 +29,7 @@ public class ServiceTypePostController {
      * <p>
      * La respuesta incluye el header Location apuntando al recurso creado.
      */
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
     public ResponseEntity<ServiceTypeResponse> create(@RequestBody @Valid ServiceTypeRequest request){
         ServiceTypeResponse response = ServiceTypeResponse.toResponse(serviceTypeCreatorService.create(request));

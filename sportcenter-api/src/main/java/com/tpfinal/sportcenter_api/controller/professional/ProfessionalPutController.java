@@ -6,6 +6,7 @@ import com.tpfinal.sportcenter_api.dto.response.professional.ProfessionalRespons
 import com.tpfinal.sportcenter_api.entity.professional.Professional;
 import com.tpfinal.sportcenter_api.service.professional.ProfessionalUpdaterService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 
@@ -25,6 +26,7 @@ public class ProfessionalPutController {
     /**
      * Actualiza un profesional existente.
      */
+    @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{id}")
     public ResponseEntity<ProfessionalResponse> update(@RequestBody @Valid ProfessionalRequest request, @PathVariable Long id){
         Professional professional = professionalUpdaterService.update(request, id);
