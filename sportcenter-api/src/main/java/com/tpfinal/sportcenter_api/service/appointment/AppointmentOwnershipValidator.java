@@ -8,11 +8,7 @@ import org.springframework.stereotype.Component;
 
 /**
  * Regla de ownership de turnos: solo el dueño o un ADMIN pueden operar
- * sobre un turno existente. La comparten los services de consulta,
- * actualización, cancelación y borrado.
- *
- * <p>AccessDeniedException ya está mapeada a 403 Forbidden en
- * GlobalExceptionHandler.
+ * sobre un turno existente.
  */
 @Component
 public class AppointmentOwnershipValidator {
