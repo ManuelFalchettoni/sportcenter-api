@@ -311,6 +311,7 @@ Variantes:
 ##### Limitación conocida: concurrencia
 
 El patrón es *check-then-act*: primero se consulta si existe un turno solapado y después se guarda, sin atomicidad entre ambos pasos. Si dos requests piden el mismo horario **exactamente al mismo tiempo**, ambas pueden pasar el chequeo antes de que cualquiera persista, y se produce una doble reserva.
+
 ---
 
 ## Manejo de errores
