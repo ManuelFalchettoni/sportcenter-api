@@ -8,6 +8,7 @@ import com.tpfinal.sportcenter_api.entity.user.User;
 import com.tpfinal.sportcenter_api.enums.appointment.AppointmentStatusEnum;
 import com.tpfinal.sportcenter_api.enums.user.UserEnum;
 import com.tpfinal.sportcenter_api.exception.appointment.AppointmentOverlapException;
+import com.tpfinal.sportcenter_api.exception.appointment.UserAppointmentOverlapException;
 import com.tpfinal.sportcenter_api.exception.professional.ProfessionalNotFoundException;
 import com.tpfinal.sportcenter_api.exception.servicetype.ServiceTypeNotFoundException;
 import com.tpfinal.sportcenter_api.repository.appointment.JpaAppointmentRepository;
@@ -164,6 +165,27 @@ class AppointmentCreatorServiceTest {
 
         assertThatThrownBy(() -> service.create(request(), owner))
                 .isInstanceOf(AppointmentOverlapException.class);
+
+        verify(jpaAppointmentRepository, never()).save(any());
+    }
+
+    // Doble reserva del usuario: el dueño ya tiene OTRO turno (con cualquier
+    // profesional) que pisa este horario. No puede estar en dos lugares a la vez.
+    @Test
+    void create_throwsWhenOwnerHasOverlappingAppointment() {
+        when(jpaProfessionalRepository.findById(2L)).thenReturn(Optional.of(professional));
+        when(jpaServiceTypeRepository.findById(3L)).thenReturn(Optional.of(serviceType));
+        // El horario del profesional está libre...
+        when(jpaAppointmentRepository.existsByProfessionalIdAndStartTimeBeforeAndEndTimeAfterAndStatusNot(
+                2L, end, start, AppointmentStatusEnum.CANCELLED))
+                .thenReturn(false);
+        // ...pero el usuario ya tiene un turno solapado.
+        when(jpaAppointmentRepository.existsByUserIdAndStartTimeBeforeAndEndTimeAfterAndStatusNot(
+                1L, end, start, AppointmentStatusEnum.CANCELLED))
+                .thenReturn(true);
+
+        assertThatThrownBy(() -> service.create(request(), owner))
+                .isInstanceOf(UserAppointmentOverlapException.class);
 
         verify(jpaAppointmentRepository, never()).save(any());
     }

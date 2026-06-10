@@ -3,6 +3,7 @@ package com.tpfinal.sportcenter_api.exception;
 import com.tpfinal.sportcenter_api.exception.appointment.AppointmentAlreadyCancelledException;
 import com.tpfinal.sportcenter_api.exception.appointment.AppointmentNotFoundException;
 import com.tpfinal.sportcenter_api.exception.appointment.AppointmentOverlapException;
+import com.tpfinal.sportcenter_api.exception.appointment.UserAppointmentOverlapException;
 import com.tpfinal.sportcenter_api.exception.auth.InvalidCredentialsException;
 import com.tpfinal.sportcenter_api.exception.professional.ProfessionalNotFoundException;
 import com.tpfinal.sportcenter_api.exception.servicetype.ServiceTypeNotFoundException;
@@ -95,12 +96,13 @@ public class GlobalExceptionHandler {
 
     /**
      * Conflictos con el estado actual -> 409 Conflict: alta duplicada de usuario,
-     * turno que se superpone con otro del mismo profesional, o intento de cancelar
-     * un turno que ya estaba cancelado.
+     * turno que se superpone con otro del mismo profesional o del mismo usuario,
+     * o intento de cancelar un turno que ya estaba cancelado.
      */
     @ExceptionHandler({
             UserAlreadyExistsException.class,
             AppointmentOverlapException.class,
+            UserAppointmentOverlapException.class,
             AppointmentAlreadyCancelledException.class
     })
     public ResponseEntity<Map<String, Object>> handleConflict(RuntimeException ex) {

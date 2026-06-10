@@ -36,6 +36,22 @@ public interface JpaAppointmentRepository extends
             AppointmentStatusEnum excludedStatus);
 
     /**
+     * Indica si el usuario ya tiene un turno (con cualquier profesional) que se
+     * superpone con el rango [startTime, endTime) recibido: una persona no
+     * puede estar en dos turnos a la misma hora.
+     */
+    boolean existsByUserIdAndStartTimeBeforeAndEndTimeAfterAndStatusNot(
+            Long userId, LocalDateTime endTime, LocalDateTime startTime,
+            AppointmentStatusEnum excludedStatus);
+
+    /**
+     * Variante para el update: excluye al propio turno que se está editando.
+     */
+    boolean existsByUserIdAndStartTimeBeforeAndEndTimeAfterAndIdNotAndStatusNot(
+            Long userId, LocalDateTime endTime, LocalDateTime startTime, Long id,
+            AppointmentStatusEnum excludedStatus);
+
+    /**
      * Turnos de un usuario, paginados. Lo usa el listado cuando el caller
      * no es ADMIN: cada uno ve solo sus propios turnos.
      */

@@ -8,6 +8,7 @@ import com.tpfinal.sportcenter_api.entity.servicetype.ServiceType;
 import com.tpfinal.sportcenter_api.entity.user.User;
 import com.tpfinal.sportcenter_api.enums.appointment.AppointmentStatusEnum;
 import com.tpfinal.sportcenter_api.exception.appointment.AppointmentOverlapException;
+import com.tpfinal.sportcenter_api.exception.appointment.UserAppointmentOverlapException;
 import com.tpfinal.sportcenter_api.exception.professional.ProfessionalNotFoundException;
 import com.tpfinal.sportcenter_api.exception.servicetype.ServiceTypeNotFoundException;
 import com.tpfinal.sportcenter_api.repository.appointment.JpaAppointmentRepository;
@@ -65,6 +66,15 @@ public class AppointmentUpdaterService {
                 request.getProfessionalId(), request.getEndTime(), request.getStartTime(), id,
                 AppointmentStatusEnum.CANCELLED)) {
             throw new AppointmentOverlapException(request.getProfessionalId());
+        }
+
+        // Una persona no puede tener dos turnos a la misma hora, aunque sean
+        // con profesionales distintos. Se valida contra el dueño del turno
+        // (no contra el caller, que puede ser un ADMIN editando un turno ajeno).
+        if (jpaAppointmentRepository.existsByUserIdAndStartTimeBeforeAndEndTimeAfterAndIdNotAndStatusNot(
+                appointment.getUser().getId(), request.getEndTime(), request.getStartTime(), id,
+                AppointmentStatusEnum.CANCELLED)) {
+            throw new UserAppointmentOverlapException(appointment.getUser().getId());
         }
 
         appointment.setStartTime(request.getStartTime());

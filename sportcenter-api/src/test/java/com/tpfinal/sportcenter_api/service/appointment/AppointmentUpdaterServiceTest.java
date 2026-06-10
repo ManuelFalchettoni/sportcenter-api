@@ -9,6 +9,7 @@ import com.tpfinal.sportcenter_api.entity.user.User;
 import com.tpfinal.sportcenter_api.enums.appointment.AppointmentStatusEnum;
 import com.tpfinal.sportcenter_api.enums.user.UserEnum;
 import com.tpfinal.sportcenter_api.exception.appointment.AppointmentOverlapException;
+import com.tpfinal.sportcenter_api.exception.appointment.UserAppointmentOverlapException;
 import com.tpfinal.sportcenter_api.repository.appointment.JpaAppointmentRepository;
 import com.tpfinal.sportcenter_api.repository.professional.JpaProfessionalRepository;
 import com.tpfinal.sportcenter_api.repository.servicetype.JpaServiceTypeRepository;
@@ -153,6 +154,26 @@ class AppointmentUpdaterServiceTest {
 
         assertThatThrownBy(() -> service.update(10L, request(), owner))
                 .isInstanceOf(AppointmentOverlapException.class);
+
+        verify(jpaAppointmentRepository, never()).save(any());
+    }
+
+    // Doble reserva del usuario al actualizar: el dueño del turno ya tiene
+    // OTRO turno (con cualquier profesional) que pisa el nuevo horario.
+    @Test
+    void update_throwsWhenOwnerHasAnotherOverlappingAppointment() {
+        when(appointmentFinderService.find(10L)).thenReturn(existing);
+        when(jpaProfessionalRepository.findById(2L)).thenReturn(Optional.of(professional));
+        when(jpaServiceTypeRepository.findById(3L)).thenReturn(Optional.of(serviceType));
+        // El horario del profesional está libre...
+        when(jpaAppointmentRepository.existsByProfessionalIdAndStartTimeBeforeAndEndTimeAfterAndIdNotAndStatusNot(
+                2L, end, start, 10L, AppointmentStatusEnum.CANCELLED)).thenReturn(false);
+        // ...pero el dueño (id 1) tiene otro turno solapado, distinto del 10.
+        when(jpaAppointmentRepository.existsByUserIdAndStartTimeBeforeAndEndTimeAfterAndIdNotAndStatusNot(
+                1L, end, start, 10L, AppointmentStatusEnum.CANCELLED)).thenReturn(true);
+
+        assertThatThrownBy(() -> service.update(10L, request(), owner))
+                .isInstanceOf(UserAppointmentOverlapException.class);
 
         verify(jpaAppointmentRepository, never()).save(any());
     }
