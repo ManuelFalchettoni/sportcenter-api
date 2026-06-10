@@ -213,9 +213,8 @@ Turno reservado entre un usuario y un profesional para un tipo de servicio deter
 | `id`           | Long          | PK, autogenerado                                             |
 | `startTime`    | LocalDateTime | `@NotNull`, `@Future`                                        |
 | `endTime`      | LocalDateTime | `@NotNull`, `@Future` — debe ser posterior a `startTime`     |
-| `confirmed`    | Boolean       | Se inicializa en `false` al crear el turno                   |
-| `cancelled`    | Boolean       | `@NotNull`, se inicializa en `false`. Se setea a `true` al cancelar |
-| `cancelledAt`  | LocalDateTime | Nullable. Se setea al momento de cancelar el turno           |
+| `status`       | AppointmentStatusEnum | `@NotNull`, `PENDING` \| `CONFIRMED` \| `CANCELLED`. Se inicializa en `PENDING` |
+| `statusModifiedAt` | LocalDateTime | Nullable. Se setea en cada cambio de estado (ej: al cancelar) |
 | `notes`        | String        | Opcional, `@Size(max = 500)`                                 |
 | `createdAt`    | LocalDateTime | Generado por el servidor, no editable                        |
 | `user`         | User          | `@ManyToOne`, requerido — siempre el usuario autenticado que creó el turno |
@@ -253,27 +252,32 @@ Reglas:
 
 - `endTime` debe ser estrictamente posterior a `startTime`; caso contrario responde `400 Bad Request`.
 - `professionalId` y `serviceTypeId` deben referenciar entidades existentes; caso contrario `404 Not Found`.
-- **Sin doble reserva:** un profesional no puede tener dos turnos que se solapen. Si el rango pedido pisa otro turno del mismo profesional, responde `409 Conflict` (`AppointmentOverlapException`). En el `PUT`, el propio turno que se edita no cuenta como solapamiento.
-- En el `POST`, el turno se crea con `confirmed = false`, `cancelled = false` y `createdAt` se setea al momento actual.
+- **Sin doble reserva del profesional:** un profesional no puede tener dos turnos activos que se solapen. Si el rango pedido pisa otro turno del mismo profesional, responde `409 Conflict` (`AppointmentOverlapException`).
+- **Sin doble reserva del usuario:** un usuario tampoco puede tener dos turnos activos a la misma hora, **aunque sean con profesionales distintos** (una persona no puede estar en dos lugares a la vez). Responde `409 Conflict` (`UserAppointmentOverlapException`). En el `PUT` se valida contra el dueño del turno, no contra el caller: un ADMIN editando un turno ajeno no compromete su propia agenda.
+- En ambos casos, en el `PUT` el propio turno que se edita no cuenta como solapamiento.
+- En el `POST`, el turno se crea con `status = PENDING` y `createdAt` se setea al momento actual.
 
 ##### Cancelación (soft delete)
 
 `PATCH /sportcenter/appointments/{id}/cancel` marca el turno como cancelado sin eliminarlo:
 
-- Setea `cancelled = true` y `cancelledAt = now()`.
-- El turno queda en el historial pero **deja de ocupar el horario del profesional**: el chequeo de solapamiento ignora los turnos cancelados (sufijo `AndCancelledFalse` en el repositorio), así que ese slot queda libre para reservarse de nuevo.
+- Setea `status = CANCELLED` y `statusModifiedAt = now()`.
+- El turno queda en el historial pero **deja de ocupar el horario** (ni del profesional ni del usuario): el chequeo de solapamiento ignora los turnos cancelados (sufijo `AndStatusNot` en el repositorio, con `CANCELLED` como estado excluido), así que ese slot queda libre para reservarse de nuevo.
 - Si el turno ya estaba cancelado, responde `409 Conflict` (`AppointmentAlreadyCancelledException`).
 - Si el id no existe, responde `404 Not Found`.
 
-A diferencia del `DELETE`, que borra el registro físicamente, la cancelación preserva la traza del turno (quién, cuándo se reservó y cuándo se canceló).
+A diferencia del `DELETE`, que borra el registro físicamente, la cancelación preserva la traza del turno (quién, cuándo se reservó y cuándo cambió de estado).
 
 ##### Cómo se detecta el solapamiento
 
-El chequeo vive en `JpaAppointmentRepository`, que es una **interfaz** sin implementación escrita a mano:
+La regla vive en `AppointmentOverlapValidator` (un `@Component`, mismo patrón que `AppointmentOwnershipValidator`): los services de creación y actualización lo invocan y él consulta el repositorio y lanza la excepción que corresponda. Valida los dos ejes — la agenda del profesional y la del usuario — con consultas espejo.
+
+Las consultas están en `JpaAppointmentRepository`, que es una **interfaz** sin implementación escrita a mano:
 
 ```java
-boolean existsByProfessionalIdAndStartTimeBeforeAndEndTimeAfterAndCancelledFalse(
-        Long professionalId, LocalDateTime endTime, LocalDateTime startTime);
+boolean existsByProfessionalIdAndStartTimeBeforeAndEndTimeAfterAndStatusNot(
+        Long professionalId, LocalDateTime endTime, LocalDateTime startTime,
+        AppointmentStatusEnum excludedStatus);
 ```
 
 No tiene cuerpo porque es un **derived query method** de Spring Data JPA: al arrancar, Spring genera un proxy que implementa la interfaz y, leyendo el **nombre** del método, arma la consulta. El nombre se descompone así:
@@ -283,7 +287,7 @@ No tiene cuerpo porque es un **derived query method** de Spring Data JPA: al arr
 | `ProfessionalId`     | `professional.id = ?` |
 | `StartTimeBefore`    | `startTime < ?`       |
 | `EndTimeAfter`       | `endTime > ?`         |
-| `CancelledFalse`     | `cancelled = false`   |
+| `StatusNot`          | `status <> ?`         |
 
 Que se traduce (en JPQL, simplificado) a:
 
@@ -292,15 +296,21 @@ SELECT count(a) > 0 FROM Appointment a
 WHERE a.professional.id = :professionalId
   AND a.startTime < :endTime
   AND a.endTime   > :startTime
-  AND a.cancelled = false
+  AND a.status   <> :excludedStatus
 ```
 
-Los parámetros se asignan **por posición**, en el orden en que aparecen en el nombre. Por eso en la llamada se pasan "cruzados": el `endTime` del turno nuevo se compara contra el `startTime` de los turnos existentes y viceversa. Dos intervalos se solapan cuando **uno empieza antes de que el otro termine y termina después de que el otro empieza**. Se usan comparaciones estrictas (`<`, `>`) a propósito: dos turnos contiguos (uno termina justo cuando el otro empieza, p. ej. `10–11` y `11–12`) **no** se consideran solapados. El filtro `cancelled = false` deja afuera los turnos cancelados, así un horario cancelado vuelve a estar disponible.
+Los parámetros se asignan **por posición**, en el orden en que aparecen en el nombre. Por eso en la llamada se pasan "cruzados": el `endTime` del turno nuevo se compara contra el `startTime` de los turnos existentes y viceversa. Dos intervalos se solapan cuando **uno empieza antes de que el otro termine y termina después de que el otro empieza**. Se usan comparaciones estrictas (`<`, `>`) a propósito: dos turnos contiguos (uno termina justo cuando el otro empieza, p. ej. `10–11` y `11–12`) **no** se consideran solapados. El filtro `status <> CANCELLED` deja afuera los turnos cancelados, así un horario cancelado vuelve a estar disponible.
 
-La variante `...AndEndTimeAfterAndIdNotAndCancelledFalse(..., id)` agrega `AND a.id <> :id` y se usa al actualizar, para que un turno no choque consigo mismo.
+Variantes:
+
+- `existsByUserId...AndStatusNot` — la consulta espejo por usuario: detecta que el dueño ya tenga otro turno activo en ese rango, con cualquier profesional.
+- `...AndIdNot...(..., id)` — agrega `AND a.id <> :id` y se usa al actualizar, para que un turno no choque consigo mismo.
 
 > El SQL real generado se puede ver en consola gracias a `spring.jpa.show-sql=true`.
 
+##### Limitación conocida: concurrencia
+
+El patrón es *check-then-act*: primero se consulta si existe un turno solapado y después se guarda, sin atomicidad entre ambos pasos. Si dos requests piden el mismo horario **exactamente al mismo tiempo**, ambas pueden pasar el chequeo antes de que cualquiera persista, y se produce una doble reserva.
 ---
 
 ## Manejo de errores
@@ -341,7 +351,7 @@ Adicionalmente, Bean Validation está activado en los callbacks pre-persist y pr
 | `401 Unauthorized` | Falta el token, o es inválido/expirado; o credenciales inválidas en el login. |
 | `403 Forbidden` | Autenticado pero sin permisos: un no-ADMIN en un endpoint de admin, o un usuario operando sobre un turno ajeno. |
 | `404 Not Found` | Recurso inexistente (usuario, profesional, service type o turno). |
-| `409 Conflict` | `username`/`email` duplicado, turno solapado, o turno ya cancelado. |
+| `409 Conflict` | `username`/`email` duplicado, turno solapado (con otro turno del profesional o del propio usuario), o turno ya cancelado. |
 | `500 Internal Server Error` | Error inesperado; el detalle se loguea en el servidor y **no** se expone al cliente. |
 
 Todos comparten el mismo formato de body de arriba. `GlobalExceptionHandler` es la única fuente de verdad: por eso las excepciones de dominio no usan `@ResponseStatus`.
@@ -373,7 +383,8 @@ cd sportcenter-api
 
 **Tests unitarios de servicios** (Mockito puro sobre la capa de lógica de negocio):
 
-- `AppointmentCreatorServiceTest` / `AppointmentUpdaterServiceTest` — alta y actualización de turnos: rango horario inválido (`endTime <= startTime`), entidades inexistentes (professional/serviceType), **detección de solapamiento** (incluyendo que un turno no choque consigo mismo en el `PUT`), que el turno se cree a nombre del usuario autenticado y que un caller ajeno sea rechazado (**ownership**).
+- `AppointmentCreatorServiceTest` / `AppointmentUpdaterServiceTest` — alta y actualización de turnos: rango horario inválido (`endTime <= startTime`), entidades inexistentes (professional/serviceType), que un solapamiento rechazado por el validador corte la operación, que el turno se cree a nombre del usuario autenticado y que un caller ajeno sea rechazado (**ownership**).
+- `AppointmentOverlapValidatorTest` — la **detección de solapamiento** en sus dos ejes: turnos del profesional y turnos del usuario (con cualquier profesional), tanto al crear como al actualizar (donde el propio turno editado no cuenta como choque).
 - `AppointmentFinderServiceTest` / `UserFinderServiceTest` — recuperación por id, `NotFoundException` y, en la variante con caller, el chequeo de ownership.
 - `JwtServiceTest` — generación y validación de tokens: token recién emitido válido, extracción del username (subject), rechazo de tokens basura, expirados o firmados con otra clave.
 - `LoginServiceTest` — login OK, normalización del email, `401` con credenciales inválidas y la **mitigación de timing** (verificación contra el hash señuelo cuando el email no existe).

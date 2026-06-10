@@ -6,9 +6,6 @@ import com.tpfinal.sportcenter_api.entity.appointment.Appointment;
 import com.tpfinal.sportcenter_api.entity.professional.Professional;
 import com.tpfinal.sportcenter_api.entity.servicetype.ServiceType;
 import com.tpfinal.sportcenter_api.entity.user.User;
-import com.tpfinal.sportcenter_api.enums.appointment.AppointmentStatusEnum;
-import com.tpfinal.sportcenter_api.exception.appointment.AppointmentOverlapException;
-import com.tpfinal.sportcenter_api.exception.appointment.UserAppointmentOverlapException;
 import com.tpfinal.sportcenter_api.exception.professional.ProfessionalNotFoundException;
 import com.tpfinal.sportcenter_api.exception.servicetype.ServiceTypeNotFoundException;
 import com.tpfinal.sportcenter_api.repository.appointment.JpaAppointmentRepository;
@@ -30,17 +27,20 @@ public class AppointmentUpdaterService {
     private final JpaServiceTypeRepository jpaServiceTypeRepository;
     private final AppointmentFinderService appointmentFinderService;
     private final AppointmentOwnershipValidator ownershipValidator;
+    private final AppointmentOverlapValidator overlapValidator;
 
     public AppointmentUpdaterService(JpaAppointmentRepository jpaAppointmentRepository,
                                      JpaProfessionalRepository jpaProfessionalRepository,
                                      JpaServiceTypeRepository jpaServiceTypeRepository,
                                      AppointmentFinderService appointmentFinderService,
-                                     AppointmentOwnershipValidator ownershipValidator) {
+                                     AppointmentOwnershipValidator ownershipValidator,
+                                     AppointmentOverlapValidator overlapValidator) {
         this.jpaAppointmentRepository = jpaAppointmentRepository;
         this.jpaProfessionalRepository = jpaProfessionalRepository;
         this.jpaServiceTypeRepository = jpaServiceTypeRepository;
         this.appointmentFinderService = appointmentFinderService;
         this.ownershipValidator = ownershipValidator;
+        this.overlapValidator = overlapValidator;
     }
 
     /**
@@ -61,21 +61,11 @@ public class AppointmentUpdaterService {
                 .orElseThrow(() -> new ServiceTypeNotFoundException(request.getServiceTypeId()));
 
         // Misma protección de doble reserva que en la creación, pero excluyendo
-        // este mismo turno (si solo cambian las notas, no debe chocar consigo mismo).
-        if (jpaAppointmentRepository.existsByProfessionalIdAndStartTimeBeforeAndEndTimeAfterAndIdNotAndStatusNot(
-                request.getProfessionalId(), request.getEndTime(), request.getStartTime(), id,
-                AppointmentStatusEnum.CANCELLED)) {
-            throw new AppointmentOverlapException(request.getProfessionalId());
-        }
-
-        // Una persona no puede tener dos turnos a la misma hora, aunque sean
-        // con profesionales distintos. Se valida contra el dueño del turno
-        // (no contra el caller, que puede ser un ADMIN editando un turno ajeno).
-        if (jpaAppointmentRepository.existsByUserIdAndStartTimeBeforeAndEndTimeAfterAndIdNotAndStatusNot(
-                appointment.getUser().getId(), request.getEndTime(), request.getStartTime(), id,
-                AppointmentStatusEnum.CANCELLED)) {
-            throw new UserAppointmentOverlapException(appointment.getUser().getId());
-        }
+        // este mismo turno (si solo cambian las notas, no debe chocar consigo
+        // mismo). El eje usuario se valida contra el dueño del turno, no contra
+        // el caller, que puede ser un ADMIN editando un turno ajeno.
+        overlapValidator.checkForUpdate(request.getProfessionalId(), appointment.getUser().getId(),
+                request.getStartTime(), request.getEndTime(), id);
 
         appointment.setStartTime(request.getStartTime());
         appointment.setEndTime(request.getEndTime());

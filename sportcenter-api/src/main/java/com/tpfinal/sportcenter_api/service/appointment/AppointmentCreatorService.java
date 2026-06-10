@@ -6,8 +6,6 @@ import com.tpfinal.sportcenter_api.entity.professional.Professional;
 import com.tpfinal.sportcenter_api.entity.servicetype.ServiceType;
 import com.tpfinal.sportcenter_api.entity.user.User;
 import com.tpfinal.sportcenter_api.enums.appointment.AppointmentStatusEnum;
-import com.tpfinal.sportcenter_api.exception.appointment.AppointmentOverlapException;
-import com.tpfinal.sportcenter_api.exception.appointment.UserAppointmentOverlapException;
 import com.tpfinal.sportcenter_api.exception.professional.ProfessionalNotFoundException;
 import com.tpfinal.sportcenter_api.exception.servicetype.ServiceTypeNotFoundException;
 import com.tpfinal.sportcenter_api.repository.appointment.JpaAppointmentRepository;
@@ -27,13 +25,16 @@ public class AppointmentCreatorService {
     private final JpaAppointmentRepository jpaAppointmentRepository;
     private final JpaProfessionalRepository jpaProfessionalRepository;
     private final JpaServiceTypeRepository jpaServiceTypeRepository;
+    private final AppointmentOverlapValidator overlapValidator;
 
     public AppointmentCreatorService(JpaAppointmentRepository jpaAppointmentRepository,
                                      JpaProfessionalRepository jpaProfessionalRepository,
-                                     JpaServiceTypeRepository jpaServiceTypeRepository) {
+                                     JpaServiceTypeRepository jpaServiceTypeRepository,
+                                     AppointmentOverlapValidator overlapValidator) {
         this.jpaAppointmentRepository = jpaAppointmentRepository;
         this.jpaProfessionalRepository = jpaProfessionalRepository;
         this.jpaServiceTypeRepository = jpaServiceTypeRepository;
+        this.overlapValidator = overlapValidator;
     }
 
     /**
@@ -51,21 +52,9 @@ public class AppointmentCreatorService {
         ServiceType serviceType = jpaServiceTypeRepository.findById(request.getServiceTypeId())
                 .orElseThrow(() -> new ServiceTypeNotFoundException(request.getServiceTypeId()));
 
-        // Evitamos la doble reserva: si el profesional ya tiene un turno que se
-        // solapa con el rango pedido, no permitimos crear otro.
-        if (jpaAppointmentRepository.existsByProfessionalIdAndStartTimeBeforeAndEndTimeAfterAndStatusNot(
-                request.getProfessionalId(), request.getEndTime(), request.getStartTime(),
-                AppointmentStatusEnum.CANCELLED)) {
-            throw new AppointmentOverlapException(request.getProfessionalId());
-        }
-
-        // Una persona no puede tener dos turnos a la misma hora, aunque sean
-        // con profesionales distintos.
-        if (jpaAppointmentRepository.existsByUserIdAndStartTimeBeforeAndEndTimeAfterAndStatusNot(
-                owner.getId(), request.getEndTime(), request.getStartTime(),
-                AppointmentStatusEnum.CANCELLED)) {
-            throw new UserAppointmentOverlapException(owner.getId());
-        }
+        // Evitamos la doble reserva, tanto del profesional como del usuario.
+        overlapValidator.checkForCreate(request.getProfessionalId(), owner.getId(),
+                request.getStartTime(), request.getEndTime());
 
         Appointment appointment = new Appointment(
                 request.getStartTime(),

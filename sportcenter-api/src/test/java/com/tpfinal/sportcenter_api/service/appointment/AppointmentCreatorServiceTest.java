@@ -29,6 +29,7 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -47,6 +48,8 @@ class AppointmentCreatorServiceTest {
     private JpaProfessionalRepository jpaProfessionalRepository;
     @Mock
     private JpaServiceTypeRepository jpaServiceTypeRepository;
+    @Mock
+    private AppointmentOverlapValidator overlapValidator;
 
     // Objeto bajo prueba: Mockito le inyecta los mocks de arriba.
     @InjectMocks
@@ -86,10 +89,7 @@ class AppointmentCreatorServiceTest {
         // Arrange: que las dos búsquedas encuentren sus entidades...
         when(jpaProfessionalRepository.findById(2L)).thenReturn(Optional.of(professional));
         when(jpaServiceTypeRepository.findById(3L)).thenReturn(Optional.of(serviceType));
-        // ...y que no exista solapamiento (false = el horario está libre).
-        when(jpaAppointmentRepository.existsByProfessionalIdAndStartTimeBeforeAndEndTimeAfterAndStatusNot(
-                2L, end, start, AppointmentStatusEnum.CANCELLED))
-                .thenReturn(false);
+        // ...y que no exista solapamiento (el validador mockeado no tira nada).
         // save(...) devuelve el mismo objeto que recibe (simulamos el guardado).
         when(jpaAppointmentRepository.save(any(Appointment.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
@@ -153,15 +153,15 @@ class AppointmentCreatorServiceTest {
         verify(jpaAppointmentRepository, never()).save(any());
     }
 
-    // Doble reserva: si el profesional ya tiene un turno solapado, se rechaza.
+    // Doble reserva: el validador de solapamiento rechaza el rango (pisa otro
+    // turno del profesional). La lógica fina de la consulta se prueba en
+    // AppointmentOverlapValidatorTest; acá solo que la creación se corta.
     @Test
     void create_throwsWhenProfessionalHasOverlappingAppointment() {
         when(jpaProfessionalRepository.findById(2L)).thenReturn(Optional.of(professional));
         when(jpaServiceTypeRepository.findById(3L)).thenReturn(Optional.of(serviceType));
-        // true = ya hay un turno que pisa este horario.
-        when(jpaAppointmentRepository.existsByProfessionalIdAndStartTimeBeforeAndEndTimeAfterAndStatusNot(
-                2L, end, start, AppointmentStatusEnum.CANCELLED))
-                .thenReturn(true);
+        doThrow(new AppointmentOverlapException(2L))
+                .when(overlapValidator).checkForCreate(2L, 1L, start, end);
 
         assertThatThrownBy(() -> service.create(request(), owner))
                 .isInstanceOf(AppointmentOverlapException.class);
@@ -175,14 +175,8 @@ class AppointmentCreatorServiceTest {
     void create_throwsWhenOwnerHasOverlappingAppointment() {
         when(jpaProfessionalRepository.findById(2L)).thenReturn(Optional.of(professional));
         when(jpaServiceTypeRepository.findById(3L)).thenReturn(Optional.of(serviceType));
-        // El horario del profesional está libre...
-        when(jpaAppointmentRepository.existsByProfessionalIdAndStartTimeBeforeAndEndTimeAfterAndStatusNot(
-                2L, end, start, AppointmentStatusEnum.CANCELLED))
-                .thenReturn(false);
-        // ...pero el usuario ya tiene un turno solapado.
-        when(jpaAppointmentRepository.existsByUserIdAndStartTimeBeforeAndEndTimeAfterAndStatusNot(
-                1L, end, start, AppointmentStatusEnum.CANCELLED))
-                .thenReturn(true);
+        doThrow(new UserAppointmentOverlapException(1L))
+                .when(overlapValidator).checkForCreate(2L, 1L, start, end);
 
         assertThatThrownBy(() -> service.create(request(), owner))
                 .isInstanceOf(UserAppointmentOverlapException.class);

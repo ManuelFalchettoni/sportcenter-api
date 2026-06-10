@@ -49,6 +49,8 @@ class AppointmentUpdaterServiceTest {
     private AppointmentFinderService appointmentFinderService;
     @Mock
     private AppointmentOwnershipValidator ownershipValidator;
+    @Mock
+    private AppointmentOverlapValidator overlapValidator;
 
     // Objeto bajo prueba con los mocks inyectados.
     @InjectMocks
@@ -92,10 +94,7 @@ class AppointmentUpdaterServiceTest {
         // ...las entidades relacionadas existen...
         when(jpaProfessionalRepository.findById(2L)).thenReturn(Optional.of(professional));
         when(jpaServiceTypeRepository.findById(3L)).thenReturn(Optional.of(serviceType));
-        // ...y no hay solapamiento. Ojo el "IdNot": excluye al propio turno 10,
-        // para que no choque consigo mismo al actualizarse.
-        when(jpaAppointmentRepository.existsByProfessionalIdAndStartTimeBeforeAndEndTimeAfterAndIdNotAndStatusNot(
-                2L, end, start, 10L, AppointmentStatusEnum.CANCELLED)).thenReturn(false);
+        // ...y no hay solapamiento (el validador mockeado no tira nada).
         // save devuelve el mismo objeto recibido.
         when(jpaAppointmentRepository.save(any(Appointment.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
@@ -142,15 +141,16 @@ class AppointmentUpdaterServiceTest {
         verify(jpaAppointmentRepository, never()).save(any()); // no guarda nada
     }
 
-    // Doble reserva al actualizar: el horario pisa OTRO turno del profesional.
+    // Doble reserva al actualizar: el validador de solapamiento rechaza el rango
+    // (pisa otro turno del profesional). La lógica fina de la consulta se prueba
+    // en AppointmentOverlapValidatorTest; acá solo que el update se corta.
     @Test
     void update_throwsWhenOverlappingWithAnotherAppointment() {
         when(appointmentFinderService.find(10L)).thenReturn(existing);
         when(jpaProfessionalRepository.findById(2L)).thenReturn(Optional.of(professional));
         when(jpaServiceTypeRepository.findById(3L)).thenReturn(Optional.of(serviceType));
-        // true = hay solapamiento con un turno distinto del 10.
-        when(jpaAppointmentRepository.existsByProfessionalIdAndStartTimeBeforeAndEndTimeAfterAndIdNotAndStatusNot(
-                2L, end, start, 10L, AppointmentStatusEnum.CANCELLED)).thenReturn(true);
+        doThrow(new AppointmentOverlapException(2L))
+                .when(overlapValidator).checkForUpdate(2L, 1L, start, end, 10L);
 
         assertThatThrownBy(() -> service.update(10L, request(), owner))
                 .isInstanceOf(AppointmentOverlapException.class);
@@ -165,12 +165,8 @@ class AppointmentUpdaterServiceTest {
         when(appointmentFinderService.find(10L)).thenReturn(existing);
         when(jpaProfessionalRepository.findById(2L)).thenReturn(Optional.of(professional));
         when(jpaServiceTypeRepository.findById(3L)).thenReturn(Optional.of(serviceType));
-        // El horario del profesional está libre...
-        when(jpaAppointmentRepository.existsByProfessionalIdAndStartTimeBeforeAndEndTimeAfterAndIdNotAndStatusNot(
-                2L, end, start, 10L, AppointmentStatusEnum.CANCELLED)).thenReturn(false);
-        // ...pero el dueño (id 1) tiene otro turno solapado, distinto del 10.
-        when(jpaAppointmentRepository.existsByUserIdAndStartTimeBeforeAndEndTimeAfterAndIdNotAndStatusNot(
-                1L, end, start, 10L, AppointmentStatusEnum.CANCELLED)).thenReturn(true);
+        doThrow(new UserAppointmentOverlapException(1L))
+                .when(overlapValidator).checkForUpdate(2L, 1L, start, end, 10L);
 
         assertThatThrownBy(() -> service.update(10L, request(), owner))
                 .isInstanceOf(UserAppointmentOverlapException.class);
