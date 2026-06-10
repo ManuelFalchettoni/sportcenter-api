@@ -7,6 +7,7 @@ import com.tpfinal.sportcenter_api.entity.appointment.Appointment;
 import com.tpfinal.sportcenter_api.entity.professional.Professional;
 import com.tpfinal.sportcenter_api.entity.servicetype.ServiceType;
 import com.tpfinal.sportcenter_api.entity.user.User;
+import com.tpfinal.sportcenter_api.enums.appointment.AppointmentStatusEnum;
 import com.tpfinal.sportcenter_api.enums.user.UserEnum;
 import com.tpfinal.sportcenter_api.exception.appointment.AppointmentOverlapException;
 import com.tpfinal.sportcenter_api.exception.professional.ProfessionalNotFoundException;
@@ -114,7 +115,7 @@ class AppointmentPostControllerTest {
         serviceType.setId(3L);
         Appointment appointment = new Appointment(start, end, "una nota", authenticatedUser, professional, serviceType);
         appointment.setId(10L);
-        appointment.setConfirmed(false);
+        appointment.setStatus(AppointmentStatusEnum.PENDING);
         appointment.setCreatedAt(LocalDateTime.now());
         return appointment;
     }
@@ -130,7 +131,7 @@ class AppointmentPostControllerTest {
                         .content(validJson()))
                 .andExpect(status().isCreated()) // 201
                 .andExpect(jsonPath("$.id").value(10))
-                .andExpect(jsonPath("$.confirmed").value(false))
+                .andExpect(jsonPath("$.status").value("PENDING"))
                 .andExpect(jsonPath("$.userId").value(1))
                 .andExpect(jsonPath("$.professionalId").value(2))
                 .andExpect(jsonPath("$.professionalName").value("Dr. House"))

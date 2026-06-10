@@ -6,6 +6,7 @@ import com.tpfinal.sportcenter_api.entity.appointment.Appointment;
 import com.tpfinal.sportcenter_api.entity.professional.Professional;
 import com.tpfinal.sportcenter_api.entity.servicetype.ServiceType;
 import com.tpfinal.sportcenter_api.entity.user.User;
+import com.tpfinal.sportcenter_api.enums.appointment.AppointmentStatusEnum;
 import com.tpfinal.sportcenter_api.enums.user.UserEnum;
 import com.tpfinal.sportcenter_api.exception.appointment.AppointmentOverlapException;
 import com.tpfinal.sportcenter_api.repository.appointment.JpaAppointmentRepository;
@@ -72,7 +73,7 @@ class AppointmentUpdaterServiceTest {
         // Turno "existente" en la BD: id 10, con una nota vieja y creado hace 2 días.
         existing = new Appointment(start, end, "vieja nota", owner, professional, serviceType);
         existing.setId(10L);
-        existing.setConfirmed(false);
+        existing.setStatus(AppointmentStatusEnum.PENDING);
         existing.setCreatedAt(LocalDateTime.now().minusDays(2));
     }
 
@@ -92,8 +93,8 @@ class AppointmentUpdaterServiceTest {
         when(jpaServiceTypeRepository.findById(3L)).thenReturn(Optional.of(serviceType));
         // ...y no hay solapamiento. Ojo el "IdNot": excluye al propio turno 10,
         // para que no choque consigo mismo al actualizarse.
-        when(jpaAppointmentRepository.existsByProfessionalIdAndStartTimeBeforeAndEndTimeAfterAndIdNotAndCancelledFalse(
-                2L, end, start, 10L)).thenReturn(false);
+        when(jpaAppointmentRepository.existsByProfessionalIdAndStartTimeBeforeAndEndTimeAfterAndIdNotAndStatusNot(
+                2L, end, start, 10L, AppointmentStatusEnum.CANCELLED)).thenReturn(false);
         // save devuelve el mismo objeto recibido.
         when(jpaAppointmentRepository.save(any(Appointment.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
@@ -147,8 +148,8 @@ class AppointmentUpdaterServiceTest {
         when(jpaProfessionalRepository.findById(2L)).thenReturn(Optional.of(professional));
         when(jpaServiceTypeRepository.findById(3L)).thenReturn(Optional.of(serviceType));
         // true = hay solapamiento con un turno distinto del 10.
-        when(jpaAppointmentRepository.existsByProfessionalIdAndStartTimeBeforeAndEndTimeAfterAndIdNotAndCancelledFalse(
-                2L, end, start, 10L)).thenReturn(true);
+        when(jpaAppointmentRepository.existsByProfessionalIdAndStartTimeBeforeAndEndTimeAfterAndIdNotAndStatusNot(
+                2L, end, start, 10L, AppointmentStatusEnum.CANCELLED)).thenReturn(true);
 
         assertThatThrownBy(() -> service.update(10L, request(), owner))
                 .isInstanceOf(AppointmentOverlapException.class);

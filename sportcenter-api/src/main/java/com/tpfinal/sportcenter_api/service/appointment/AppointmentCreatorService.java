@@ -5,6 +5,7 @@ import com.tpfinal.sportcenter_api.entity.appointment.Appointment;
 import com.tpfinal.sportcenter_api.entity.professional.Professional;
 import com.tpfinal.sportcenter_api.entity.servicetype.ServiceType;
 import com.tpfinal.sportcenter_api.entity.user.User;
+import com.tpfinal.sportcenter_api.enums.appointment.AppointmentStatusEnum;
 import com.tpfinal.sportcenter_api.exception.appointment.AppointmentOverlapException;
 import com.tpfinal.sportcenter_api.exception.professional.ProfessionalNotFoundException;
 import com.tpfinal.sportcenter_api.exception.servicetype.ServiceTypeNotFoundException;
@@ -36,7 +37,7 @@ public class AppointmentCreatorService {
 
     /**
      * Crea y persiste un nuevo turno a nombre del usuario autenticado (owner).
-     * El turno se guarda como no confirmado y con la fecha de creación
+     * El turno se guarda en estado PENDING y con la fecha de creación
      * establecida en el momento actual.
      */
     public Appointment create(AppointmentRequest request, User owner){
@@ -51,8 +52,9 @@ public class AppointmentCreatorService {
 
         // Evitamos la doble reserva: si el profesional ya tiene un turno que se
         // solapa con el rango pedido, no permitimos crear otro.
-        if (jpaAppointmentRepository.existsByProfessionalIdAndStartTimeBeforeAndEndTimeAfterAndCancelledFalse(
-                request.getProfessionalId(), request.getEndTime(), request.getStartTime())) {
+        if (jpaAppointmentRepository.existsByProfessionalIdAndStartTimeBeforeAndEndTimeAfterAndStatusNot(
+                request.getProfessionalId(), request.getEndTime(), request.getStartTime(),
+                AppointmentStatusEnum.CANCELLED)) {
             throw new AppointmentOverlapException(request.getProfessionalId());
         }
 
@@ -64,7 +66,7 @@ public class AppointmentCreatorService {
                 professional,
                 serviceType
         );
-        appointment.setConfirmed(false);
+        appointment.setStatus(AppointmentStatusEnum.PENDING);
         appointment.setCreatedAt(LocalDateTime.now());
 
         return jpaAppointmentRepository.save(appointment);

@@ -6,6 +6,7 @@ import com.tpfinal.sportcenter_api.entity.appointment.Appointment;
 import com.tpfinal.sportcenter_api.entity.professional.Professional;
 import com.tpfinal.sportcenter_api.entity.servicetype.ServiceType;
 import com.tpfinal.sportcenter_api.entity.user.User;
+import com.tpfinal.sportcenter_api.enums.appointment.AppointmentStatusEnum;
 import com.tpfinal.sportcenter_api.exception.appointment.AppointmentOverlapException;
 import com.tpfinal.sportcenter_api.exception.professional.ProfessionalNotFoundException;
 import com.tpfinal.sportcenter_api.exception.servicetype.ServiceTypeNotFoundException;
@@ -60,8 +61,9 @@ public class AppointmentUpdaterService {
 
         // Misma protección de doble reserva que en la creación, pero excluyendo
         // este mismo turno (si solo cambian las notas, no debe chocar consigo mismo).
-        if (jpaAppointmentRepository.existsByProfessionalIdAndStartTimeBeforeAndEndTimeAfterAndIdNotAndCancelledFalse(
-                request.getProfessionalId(), request.getEndTime(), request.getStartTime(), id)) {
+        if (jpaAppointmentRepository.existsByProfessionalIdAndStartTimeBeforeAndEndTimeAfterAndIdNotAndStatusNot(
+                request.getProfessionalId(), request.getEndTime(), request.getStartTime(), id,
+                AppointmentStatusEnum.CANCELLED)) {
             throw new AppointmentOverlapException(request.getProfessionalId());
         }
 

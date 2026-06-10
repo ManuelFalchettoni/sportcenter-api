@@ -5,6 +5,7 @@ import com.tpfinal.sportcenter_api.entity.appointment.Appointment;
 import com.tpfinal.sportcenter_api.entity.professional.Professional;
 import com.tpfinal.sportcenter_api.entity.servicetype.ServiceType;
 import com.tpfinal.sportcenter_api.entity.user.User;
+import com.tpfinal.sportcenter_api.enums.appointment.AppointmentStatusEnum;
 import com.tpfinal.sportcenter_api.enums.user.UserEnum;
 import com.tpfinal.sportcenter_api.exception.appointment.AppointmentOverlapException;
 import com.tpfinal.sportcenter_api.exception.professional.ProfessionalNotFoundException;
@@ -80,12 +81,13 @@ class AppointmentCreatorServiceTest {
     // Caso feliz: con datos válidos, el turno se guarda como NO confirmado, con
     // fecha de creación seteada y a nombre del owner recibido.
     @Test
-    void create_persistsAppointmentAsUnconfirmedWithCreatedAt() {
+    void create_persistsAppointmentAsPendingWithCreatedAt() {
         // Arrange: que las dos búsquedas encuentren sus entidades...
         when(jpaProfessionalRepository.findById(2L)).thenReturn(Optional.of(professional));
         when(jpaServiceTypeRepository.findById(3L)).thenReturn(Optional.of(serviceType));
         // ...y que no exista solapamiento (false = el horario está libre).
-        when(jpaAppointmentRepository.existsByProfessionalIdAndStartTimeBeforeAndEndTimeAfterAndCancelledFalse(2L, end, start))
+        when(jpaAppointmentRepository.existsByProfessionalIdAndStartTimeBeforeAndEndTimeAfterAndStatusNot(
+                2L, end, start, AppointmentStatusEnum.CANCELLED))
                 .thenReturn(false);
         // save(...) devuelve el mismo objeto que recibe (simulamos el guardado).
         when(jpaAppointmentRepository.save(any(Appointment.class)))
@@ -107,7 +109,7 @@ class AppointmentCreatorServiceTest {
         assertThat(saved.getUser()).isSameAs(owner); // el dueño es el autenticado
         assertThat(saved.getProfessional()).isSameAs(professional);
         assertThat(saved.getServiceType()).isSameAs(serviceType);
-        assertThat(saved.getConfirmed()).isFalse();      // nace sin confirmar
+        assertThat(saved.getStatus()).isEqualTo(AppointmentStatusEnum.PENDING); // nace pendiente
         assertThat(saved.getCreatedAt()).isNotNull();    // y con fecha de alta
         // ...y que devuelve ese mismo turno guardado.
         assertThat(result).isSameAs(saved);
@@ -156,7 +158,8 @@ class AppointmentCreatorServiceTest {
         when(jpaProfessionalRepository.findById(2L)).thenReturn(Optional.of(professional));
         when(jpaServiceTypeRepository.findById(3L)).thenReturn(Optional.of(serviceType));
         // true = ya hay un turno que pisa este horario.
-        when(jpaAppointmentRepository.existsByProfessionalIdAndStartTimeBeforeAndEndTimeAfterAndCancelledFalse(2L, end, start))
+        when(jpaAppointmentRepository.existsByProfessionalIdAndStartTimeBeforeAndEndTimeAfterAndStatusNot(
+                2L, end, start, AppointmentStatusEnum.CANCELLED))
                 .thenReturn(true);
 
         assertThatThrownBy(() -> service.create(request(), owner))

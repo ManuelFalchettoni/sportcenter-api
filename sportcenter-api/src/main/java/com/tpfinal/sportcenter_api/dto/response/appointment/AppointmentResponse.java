@@ -1,6 +1,7 @@
 package com.tpfinal.sportcenter_api.dto.response.appointment;
 
 import com.tpfinal.sportcenter_api.entity.appointment.Appointment;
+import com.tpfinal.sportcenter_api.enums.appointment.AppointmentStatusEnum;
 
 import java.time.LocalDateTime;
 
@@ -9,9 +10,8 @@ public class AppointmentResponse {
     private Long id;
     private LocalDateTime startTime;
     private LocalDateTime endTime;
-    private Boolean confirmed;
-    private Boolean cancelled;
-    private LocalDateTime cancelledAt;
+    private AppointmentStatusEnum status;
+    private LocalDateTime statusModifiedAt;
     private String notes;
     private LocalDateTime createdAt;
     private Long userId;
@@ -23,16 +23,15 @@ public class AppointmentResponse {
 
     public AppointmentResponse(){}
 
-    public AppointmentResponse(Long id, LocalDateTime startTime, LocalDateTime endTime, Boolean confirmed,
-                               Boolean cancelled, LocalDateTime cancelledAt, String notes, LocalDateTime createdAt,
+    public AppointmentResponse(Long id, LocalDateTime startTime, LocalDateTime endTime, AppointmentStatusEnum status,
+                               LocalDateTime statusModifiedAt, String notes, LocalDateTime createdAt,
                                Long userId, String username,
                                Long professionalId, String professionalName, Long serviceTypeId, String serviceTypeName) {
         this.id = id;
         this.startTime = startTime;
         this.endTime = endTime;
-        this.confirmed = confirmed;
-        this.cancelled = cancelled;
-        this.cancelledAt = cancelledAt;
+        this.status = status;
+        this.statusModifiedAt = statusModifiedAt;
         this.notes = notes;
         this.createdAt = createdAt;
         this.userId = userId;
@@ -67,28 +66,20 @@ public class AppointmentResponse {
         this.endTime = endTime;
     }
 
-    public Boolean getConfirmed() {
-        return confirmed;
+    public AppointmentStatusEnum getStatus() {
+        return status;
     }
 
-    public void setConfirmed(Boolean confirmed) {
-        this.confirmed = confirmed;
+    public void setStatus(AppointmentStatusEnum status) {
+        this.status = status;
     }
 
-    public Boolean getCancelled() {
-        return cancelled;
+    public LocalDateTime getStatusModifiedAt() {
+        return statusModifiedAt;
     }
 
-    public void setCancelled(Boolean cancelled) {
-        this.cancelled = cancelled;
-    }
-
-    public LocalDateTime getCancelledAt() {
-        return cancelledAt;
-    }
-
-    public void setCancelledAt(LocalDateTime cancelledAt) {
-        this.cancelledAt = cancelledAt;
+    public void setStatusModifiedAt(LocalDateTime statusModifiedAt) {
+        this.statusModifiedAt = statusModifiedAt;
     }
 
     public String getNotes() {
@@ -160,9 +151,8 @@ public class AppointmentResponse {
                 appointment.getId(),
                 appointment.getStartTime(),
                 appointment.getEndTime(),
-                appointment.getConfirmed(),
-                appointment.getCancelled(),
-                appointment.getCancelledAt(),
+                appointment.getStatus(),
+                appointment.getStatusModifiedAt(),
                 appointment.getNotes(),
                 appointment.getCreatedAt(),
                 appointment.getUser().getId(),

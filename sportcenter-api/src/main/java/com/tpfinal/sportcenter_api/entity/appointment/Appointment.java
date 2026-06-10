@@ -3,6 +3,7 @@ package com.tpfinal.sportcenter_api.entity.appointment;
 import com.tpfinal.sportcenter_api.entity.professional.Professional;
 import com.tpfinal.sportcenter_api.entity.servicetype.ServiceType;
 import com.tpfinal.sportcenter_api.entity.user.User;
+import com.tpfinal.sportcenter_api.enums.appointment.AppointmentStatusEnum;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -24,22 +25,19 @@ public class Appointment {
     @NotNull
     private LocalDateTime endTime;
 
-    @Column(nullable = false)
+    /**
+     * Estado del turno. CANCELLED actúa como soft delete: el turno queda en el
+     * historial pero deja de ocupar el horario del profesional.
+     */
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
     @NotNull
-    private Boolean confirmed = false;
+    private AppointmentStatusEnum status = AppointmentStatusEnum.PENDING;
 
     /**
-     * Indica si el turno fue cancelado. el turno queda en el historial pero deja de estar activo.
-     *
+     * Momento del último cambio de estado.
      */
-    @Column(nullable = false)
-    @NotNull
-    private Boolean cancelled = false;
-
-    /**
-     * Momento en que se canceló el turno.
-     */
-    private LocalDateTime cancelledAt;
+    private LocalDateTime statusModifiedAt;
 
     @Column(length = 500)
     @Size(max = 500)
@@ -100,28 +98,20 @@ public class Appointment {
         this.endTime = endTime;
     }
 
-    public Boolean getConfirmed() {
-        return confirmed;
+    public AppointmentStatusEnum getStatus() {
+        return status;
     }
 
-    public void setConfirmed(Boolean confirmed) {
-        this.confirmed = confirmed;
+    public void setStatus(AppointmentStatusEnum status) {
+        this.status = status;
     }
 
-    public Boolean getCancelled() {
-        return cancelled;
+    public LocalDateTime getStatusModifiedAt() {
+        return statusModifiedAt;
     }
 
-    public void setCancelled(Boolean cancelled) {
-        this.cancelled = cancelled;
-    }
-
-    public LocalDateTime getCancelledAt() {
-        return cancelledAt;
-    }
-
-    public void setCancelledAt(LocalDateTime cancelledAt) {
-        this.cancelledAt = cancelledAt;
+    public void setStatusModifiedAt(LocalDateTime statusModifiedAt) {
+        this.statusModifiedAt = statusModifiedAt;
     }
 
     public String getNotes() {

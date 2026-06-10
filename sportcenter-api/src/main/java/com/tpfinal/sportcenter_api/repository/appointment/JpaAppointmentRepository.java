@@ -1,6 +1,7 @@
 package com.tpfinal.sportcenter_api.repository.appointment;
 
 import com.tpfinal.sportcenter_api.entity.appointment.Appointment;
+import com.tpfinal.sportcenter_api.enums.appointment.AppointmentStatusEnum;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -19,18 +20,20 @@ public interface JpaAppointmentRepository extends
 
     /**
      * Indica si el profesional ya tiene un turno que se superpone con el rango
-     * [startTime, endTime) recibido. El sufijo CancelledFalse deja afuera los
-     * turnos cancelados: un turno cancelado libera el horario.
+     * [startTime, endTime) recibido. El sufijo StatusNot deja afuera los turnos
+     * en el estado excluido (CANCELLED): un turno cancelado libera el horario.
      */
-    boolean existsByProfessionalIdAndStartTimeBeforeAndEndTimeAfterAndCancelledFalse(
-            Long professionalId, LocalDateTime endTime, LocalDateTime startTime);
+    boolean existsByProfessionalIdAndStartTimeBeforeAndEndTimeAfterAndStatusNot(
+            Long professionalId, LocalDateTime endTime, LocalDateTime startTime,
+            AppointmentStatusEnum excludedStatus);
 
     /**
      * excluye un turno por id. Se usa al actualizar, para que el propio turno
      * que se está editando no cuente como un solapamiento consigo mismo.
      */
-    boolean existsByProfessionalIdAndStartTimeBeforeAndEndTimeAfterAndIdNotAndCancelledFalse(
-            Long professionalId, LocalDateTime endTime, LocalDateTime startTime, Long id);
+    boolean existsByProfessionalIdAndStartTimeBeforeAndEndTimeAfterAndIdNotAndStatusNot(
+            Long professionalId, LocalDateTime endTime, LocalDateTime startTime, Long id,
+            AppointmentStatusEnum excludedStatus);
 
     /**
      * Turnos de un usuario, paginados. Lo usa el listado cuando el caller

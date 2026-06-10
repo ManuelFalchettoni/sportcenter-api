@@ -3,6 +3,7 @@ package com.tpfinal.sportcenter_api.service.appointment;
 import com.tpfinal.sportcenter_api.dto.response.appointment.AppointmentResponse;
 import com.tpfinal.sportcenter_api.entity.appointment.Appointment;
 import com.tpfinal.sportcenter_api.entity.user.User;
+import com.tpfinal.sportcenter_api.enums.appointment.AppointmentStatusEnum;
 import com.tpfinal.sportcenter_api.exception.appointment.AppointmentAlreadyCancelledException;
 import com.tpfinal.sportcenter_api.repository.appointment.JpaAppointmentRepository;
 import org.springframework.stereotype.Service;
@@ -38,12 +39,12 @@ public class AppointmentCancelService {
         Appointment appointment = appointmentFinderService.find(id);
         ownershipValidator.check(appointment, caller);
 
-        if (Boolean.TRUE.equals(appointment.getCancelled())) {
+        if (appointment.getStatus() == AppointmentStatusEnum.CANCELLED) {
             throw new AppointmentAlreadyCancelledException(id);
         }
 
-        appointment.setCancelled(true);
-        appointment.setCancelledAt(LocalDateTime.now());
+        appointment.setStatus(AppointmentStatusEnum.CANCELLED);
+        appointment.setStatusModifiedAt(LocalDateTime.now());
 
         Appointment cancelled = jpaAppointmentRepository.save(appointment);
         return AppointmentResponse.toResponse(cancelled);
