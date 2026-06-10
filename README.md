@@ -121,6 +121,7 @@ Profesional que presta servicios en el centro deportivo.
 |--------|-----------------------|-----------------------------------|-------------|--------------------------------|
 | GET    | `/{id}`               | Obtiene un profesional por id     | Autenticado | `200 OK` · `ProfessionalResponse` |
 | GET    | `?page=&size=&sort=`  | Lista paginada                    | Autenticado | `200 OK` · `Page<ProfessionalResponse>` |
+| GET    | `/{id}/availability?date=` | Horarios ocupados de un día  | Autenticado | `200 OK` · `ProfessionalAvailabilityResponse` |
 | POST   | `/`                   | Crea un profesional               | ADMIN       | `201 Created` + header `Location` |
 | PUT    | `/{id}`               | Actualiza un profesional          | ADMIN       | `200 OK` · `ProfessionalResponse` |
 | DELETE | `/{id}`               | Elimina un profesional            | ADMIN       | `204 No Content`              |
@@ -137,6 +138,30 @@ Profesional que presta servicios en el centro deportivo.
 ```
 
 El campo `serviceTypeIds` es opcional. Cada id debe ser un Long positivo no nulo (`@Positive`, `@NotNull`) y existir en `ServiceType` (sino `404 Not Found`). Se permite un máximo de 50 ids por request. En el `Response` los servicios se devuelven como `Set<ServiceTypeResponse>` bajo el campo `services`.
+
+##### Disponibilidad: `GET /{id}/availability?date=YYYY-MM-DD`
+
+Devuelve los **rangos horarios ocupados** del profesional para el día pedido, para que el frontend pueda mostrar la agenda y el usuario elija un horario libre en lugar de reservar a ciegas y recibir un `409`.
+
+```json
+{
+  "professionalId": 2,
+  "date": "2026-07-10",
+  "busySlots": [
+    { "startTime": "2026-07-10T10:00:00", "endTime": "2026-07-10T10:45:00" },
+    { "startTime": "2026-07-10T15:00:00", "endTime": "2026-07-10T16:00:00" }
+  ]
+}
+```
+
+Reglas:
+
+- Cuentan solo los turnos **activos** (`PENDING`/`CONFIRMED`): los cancelados liberan el horario, igual que en el chequeo de solapamiento. Los slots vienen ordenados por hora de inicio; un día libre devuelve `busySlots: []`.
+- **Privacidad:** se exponen únicamente los rangos horarios — nada de quién reservó, notas ni ids de turnos. Por eso cualquier autenticado puede consultarla (un `USER` la necesita para reservar) sin acceder a datos de otros usuarios.
+- `date` es obligatorio y en formato ISO (`yyyy-MM-dd`); si falta o está mal formado responde `400 Bad Request`. Si el profesional no existe, `404 Not Found` (un id inexistente no debe parecer un día libre).
+- La consulta usa la misma condición de solapamiento que los `exists` del repositorio (ventana `[00:00, 00:00 del día siguiente)` con comparaciones estrictas), así que también captura turnos que cruzan la medianoche.
+
+> Nota: la agenda muestra los horarios ocupados del profesional, pero la reserva además valida la agenda del **propio usuario** (ver reglas de Appointment); un horario libre del profesional puede igual dar `409` si el usuario ya tiene otro turno a esa hora.
 
 ---
 
@@ -376,7 +401,7 @@ Adicionalmente, Bean Validation está activado en los callbacks pre-persist y pr
 
 | Código | Cuándo |
 |--------|--------|
-| `400 Bad Request` | Validación del body (`@Valid`), JSON malformado, o reglas de negocio como `endTime <= startTime`. |
+| `400 Bad Request` | Validación del body (`@Valid`), JSON malformado, un path variable o query param con tipo/formato inválido (ej: `date` no-ISO), o reglas de negocio como `endTime <= startTime`. |
 | `401 Unauthorized` | Falta el token, o es inválido/expirado; o credenciales inválidas en el login. |
 | `403 Forbidden` | Autenticado pero sin permisos: un no-ADMIN en un endpoint de admin, o un usuario operando sobre un turno ajeno. |
 | `404 Not Found` | Recurso inexistente (usuario, profesional, service type o turno). |
@@ -415,6 +440,7 @@ cd sportcenter-api
 - `AppointmentCreatorServiceTest` / `AppointmentUpdaterServiceTest` — alta y actualización de turnos: rango horario inválido (`endTime <= startTime`), entidades inexistentes (professional/serviceType), que un solapamiento rechazado por el validador corte la operación, que el turno se cree a nombre del usuario autenticado y que un caller ajeno sea rechazado (**ownership**).
 - `AppointmentOverlapValidatorTest` — la **detección de solapamiento** en sus dos ejes: turnos del profesional y turnos del usuario (con cualquier profesional), tanto al crear como al actualizar (donde el propio turno editado no cuenta como choque).
 - `AppointmentFinderServiceTest` / `UserFinderServiceTest` — recuperación por id, `NotFoundException` y, en la variante con caller, el chequeo de ownership.
+- `ProfessionalAvailabilityServiceTest` — agenda ocupada de un día: ventana de fechas correcta (excluye `CANCELLED`), lista vacía si el día está libre y `404` si el profesional no existe.
 - `JwtServiceTest` — generación y validación de tokens: token recién emitido válido, extracción del username (subject), rechazo de tokens basura, expirados o firmados con otra clave.
 - `LoginServiceTest` — login OK, normalización del email, `401` con credenciales inválidas y la **mitigación de timing** (verificación contra el hash señuelo cuando el email no existe).
 - `UserCreatorServiceTest` — normalización (trim/lowercase), hasheo de password, rol forzado a `USER` y `409` por username/email duplicado.
@@ -426,6 +452,7 @@ cd sportcenter-api
 - `AuthMeControllerTest` — `200` con los datos del usuario autenticado (y que la respuesta **nunca expone el password**).
 - `UserPostControllerTest` — `201` (y que la respuesta **nunca expone el password**), `409` duplicado, `400` por validación.
 - `AppointmentPostControllerTest` — `201`, `404` entidad inexistente, `409` solapamiento, `400` por rango/fecha (`@Future`) o campos faltantes.
+- `ProfessionalAvailabilityControllerTest` — `200` con los slots (y que **no se filtra** ningún dato del turno ni del usuario), `404` profesional inexistente, `400` por `date` faltante o mal formado.
 
 > El test `contextLoads()` (`@SpringBootTest`) sí requiere una base de datos disponible, por eso queda fuera del filtro de arriba.
 

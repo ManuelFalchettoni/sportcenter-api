@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * Repositorio JPA de turnos.
@@ -56,4 +57,14 @@ public interface JpaAppointmentRepository extends
      * no es ADMIN: cada uno ve solo sus propios turnos.
      */
     Page<Appointment> findByUserId(Long userId, Pageable pageable);
+
+    /**
+     * Turnos activos del profesional que pisan el rango [startTime, endTime),
+     * ordenados por hora de inicio. Misma condición de solapamiento que los
+     * exists de arriba, pero devolviendo los turnos: lo usa la consulta de
+     * disponibilidad para listar los horarios ocupados de un día.
+     */
+    List<Appointment> findByProfessionalIdAndStartTimeBeforeAndEndTimeAfterAndStatusNotOrderByStartTimeAsc(
+            Long professionalId, LocalDateTime endTime, LocalDateTime startTime,
+            AppointmentStatusEnum excludedStatus);
 }

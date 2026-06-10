@@ -22,6 +22,7 @@ import org.springframework.web.ErrorResponse;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -75,6 +76,20 @@ public class GlobalExceptionHandler {
         }
         Map<String, Object> body = baseBody(HttpStatus.BAD_REQUEST, "Entity validation failed");
         body.put("errors", fieldErrors);
+        return ResponseEntity.badRequest().body(body);
+    }
+
+    /**
+     * Un path variable o query param que no se puede convertir al tipo esperado
+     * (ej: /users/abc donde se espera un Long, o date=10/07/2026 donde se espera
+     * ISO yyyy-MM-dd) -> 400 Bad Request. Sin este handler caería en el
+     * catch-all como 500, y el error es del cliente, no del servidor.
+     */
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<Map<String, Object>> handleTypeMismatch(MethodArgumentTypeMismatchException ex) {
+        String expectedType = ex.getRequiredType() != null ? ex.getRequiredType().getSimpleName() : "expected type";
+        Map<String, Object> body = baseBody(HttpStatus.BAD_REQUEST,
+                "Invalid value for parameter '" + ex.getName() + "': expected a valid " + expectedType + ".");
         return ResponseEntity.badRequest().body(body);
     }
 
