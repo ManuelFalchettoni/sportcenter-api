@@ -3,10 +3,10 @@ package com.tpfinal.sportcenter_api.service.user;
 import com.tpfinal.sportcenter_api.dto.request.user.UserRequest;
 import com.tpfinal.sportcenter_api.dto.response.user.UserResponse;
 import com.tpfinal.sportcenter_api.entity.user.User;
+import com.tpfinal.sportcenter_api.enums.user.UserEnum;
 import com.tpfinal.sportcenter_api.exception.user.UserAlreadyExistsException;
 import com.tpfinal.sportcenter_api.repository.user.JpaUserRepository;
 import jakarta.validation.Valid;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -15,6 +15,8 @@ import org.springframework.stereotype.Service;
  * <p>
  * Valida unicidad de username/email cuando cambian respecto al valor actual
  * y rehashea la contraseña solo si se provee una nueva no vacía.
+ * Cuando un no-ADMIN cambia su propia contraseña, debe confirmar la vigente
+ * (currentPassword): un token robado no alcanza para tomar la cuenta.
  */
 @Service
 public class UserUpdaterService {
@@ -30,8 +32,10 @@ public class UserUpdaterService {
 
     /**
      * Actualiza los datos del usuario identificado por el ID.
+     * El caller (ya autorizado por el @PreAuthorize del controller: ADMIN o el
+     * propio usuario) se usa para decidir si exigir la contraseña vigente.
      */
-    public UserResponse update(Long id, @Valid UserRequest request) {
+    public UserResponse update(Long id, @Valid UserRequest request, User caller) {
         User user = userFinderService.find(id);
 
         // Normalización: trim en username y trim+lowercase en email,
@@ -54,6 +58,16 @@ public class UserUpdaterService {
         // Cualquier cambio de rol debe hacerse por un endpoint admin separado.
 
         if (request.getPassword() != null && !request.getPassword().isBlank()) {
+            // Un no-ADMIN cambiando su clave debe confirmar la vigente. Un ADMIN
+            // puede resetear sin ella (flujo de "olvidé mi contraseña" vía admin).
+            if (caller.getRole() != UserEnum.ADMIN) {
+                if (request.getCurrentPassword() == null || request.getCurrentPassword().isBlank()) {
+                    throw new IllegalArgumentException("currentPassword is required to change the password");
+                }
+                if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPassword())) {
+                    throw new IllegalArgumentException("currentPassword is incorrect");
+                }
+            }
             user.setPassword(passwordEncoder.encode(request.getPassword()));
         }
 

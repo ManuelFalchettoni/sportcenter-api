@@ -25,6 +25,11 @@ public class UserRequest {
     @Size(min = 8, max = 72)
     private String password;
 
+    // Solo para el PUT: la contraseña vigente, exigida cuando un no-ADMIN cambia
+    // su propia clave (un token robado no alcanza para tomar la cuenta).
+    // Sin @Size: se compara contra el hash, no se persiste.
+    private String currentPassword;
+
     public UserRequest() {}
 
     public UserRequest(String username, String email, String password) {
@@ -55,6 +60,14 @@ public class UserRequest {
 
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    public String getCurrentPassword() {
+        return currentPassword;
+    }
+
+    public void setCurrentPassword(String currentPassword) {
+        this.currentPassword = currentPassword;
     }
 
     public static User fromRequest(UserRequest userRequest) {

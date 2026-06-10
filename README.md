@@ -74,7 +74,7 @@ Es el primer request que hace el frontend después del login: el token no lleva 
 - **Públicas:** `/sportcenter/auth/**` (login) y el registro `POST /sportcenter/users`. Excepción: `GET /sportcenter/auth/me` requiere token (la regla específica se declara antes del `permitAll` de `/auth/**`, y en Spring Security gana la primera que matchea).
 - **Protegidas:** cualquier otra ruta requiere un token válido; sin él se responde `401 Unauthorized`.
 - **Solo ADMIN** (`@PreAuthorize("hasRole('ADMIN')")` — un autenticado sin ese rol recibe `403 Forbidden`):
-  - Gestión de usuarios: listar, actualizar, borrar y cambiar rol. Ver un usuario por id permite además al **propio usuario** (`hasRole('ADMIN') or #id == principal.id`).
+  - Gestión de usuarios: listar, borrar y cambiar rol. Ver y **actualizar** un usuario por id permite además al **propio usuario** (`hasRole('ADMIN') or #id == principal.id`); el rol nunca se modifica desde el `PUT`, y un no-ADMIN que cambia su contraseña debe confirmar la vigente (`currentPassword`).
   - Escrituras de profesionales y de tipos de servicio (`POST`/`PUT`/`DELETE`). Las lecturas quedan abiertas a cualquier autenticado, porque un `USER` las necesita para reservar turnos.
 
 Cada tabla de endpoints indica el permiso requerido en la columna **Acceso**.
@@ -218,7 +218,7 @@ Usuario del sistema. La contraseña se almacena hasheada con BCrypt y nunca se d
 | GET    | `/{id}`               | Obtiene un usuario por id         | ADMIN o el propio usuario | `200 OK` · `UserResponse`        |
 | GET    | `?page=&size=&sort=`  | Lista paginada                    | ADMIN               | `200 OK` · `Page<UserResponse>`        |
 | POST   | `/`                   | Crea un usuario (registro)        | Público             | `201 Created` · `UserResponse`         |
-| PUT    | `/{id}`               | Actualiza un usuario              | ADMIN               | `200 OK` · `UserResponse`              |
+| PUT    | `/{id}`               | Actualiza un usuario              | ADMIN o el propio usuario | `200 OK` · `UserResponse`        |
 | PATCH  | `/{id}/role`          | Cambia el rol                     | ADMIN               | `200 OK` · `UserResponse`              |
 | DELETE | `/{id}`               | Elimina un usuario                | ADMIN               | `204 No Content`                       |
 
@@ -239,6 +239,19 @@ Notas:
 - `role` **no se acepta en el body** del `POST` ni del `PUT`. Todo usuario creado por esos endpoints queda con rol `USER`. El rol se modifica exclusivamente vía `PATCH /sportcenter/users/{id}/role` (ver más abajo), restringido a administradores.
 - `email` se normaliza a minúsculas y `username` se trimea antes de comparar y persistir, así la unicidad no depende de capitalización ni espacios accidentales.
 - `password` debe tener entre 8 y 72 caracteres (límite superior por BCrypt, que trunca silenciosamente más allá de 72 bytes). En el `POST` es obligatoria. En el `PUT` se puede **omitir el campo** (enviarlo como `null` o no incluirlo) para no cambiar la clave; si se envía, debe respetar el rango 8–72.
+- El `PUT` está protegido con `hasRole('ADMIN') or #id == principal.id` (mismo patrón que el `GET` por id): un usuario común puede editar **su propio** perfil (pantalla "Mi perfil"), pero no el de terceros (`403`). El rol sigue sin poder tocarse desde este endpoint, sea quien sea el caller.
+- **Cambio de contraseña con confirmación:** cuando un no-ADMIN cambia su propia clave (envía `password` en el `PUT`), debe incluir también `currentPassword` con la clave vigente; si falta o no coincide, responde `400 Bad Request` y no se persiste nada. La razón: el token JWT solo prueba que alguien inició sesión — sin esta confirmación, un token robado alcanzaría para cambiar la clave y tomar la cuenta de forma permanente. Un ADMIN puede resetear la clave de cualquier usuario sin `currentPassword` (flujo de "olvidé mi contraseña" gestionado por un administrador).
+
+##### Body de ejemplo (`PUT /{id}` cambiando la propia contraseña)
+
+```json
+{
+  "username": "manu",
+  "email": "manu@example.com",
+  "password": "newSecret123",
+  "currentPassword": "oldSecret123"
+}
+```
 
 ##### Body de ejemplo (`PATCH /{id}/role`)
 
@@ -470,6 +483,7 @@ cd sportcenter-api
 - `LoginServiceTest` — login OK, normalización del email, `401` con credenciales inválidas y la **mitigación de timing** (verificación contra el hash señuelo cuando el email no existe).
 - `UserCreatorServiceTest` — normalización (trim/lowercase), hasheo de password, rol forzado a `USER` y `409` por username/email duplicado.
 - `UserRoleUpdaterServiceTest` — cambio de rol y persistencia.
+- `UserUpdaterServiceTest` — edición del propio perfil: normalización y rol preservado, cambio de clave con `currentPassword` correcta/incorrecta/faltante, reseteo por ADMIN sin `currentPassword` y `409` por username tomado.
 
 **Tests de integración de controllers** (`@WebMvcTest` + `MockMvc`, servicios mockeados): verifican routing, validación `@Valid` y que `GlobalExceptionHandler` traduzca cada caso al status y body correctos.
 
