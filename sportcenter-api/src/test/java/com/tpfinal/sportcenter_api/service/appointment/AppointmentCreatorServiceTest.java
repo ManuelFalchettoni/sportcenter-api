@@ -9,6 +9,7 @@ import com.tpfinal.sportcenter_api.enums.appointment.AppointmentStatusEnum;
 import com.tpfinal.sportcenter_api.enums.user.UserEnum;
 import com.tpfinal.sportcenter_api.exception.appointment.AppointmentOverlapException;
 import com.tpfinal.sportcenter_api.exception.appointment.UserAppointmentOverlapException;
+import com.tpfinal.sportcenter_api.exception.professional.ProfessionalInactiveException;
 import com.tpfinal.sportcenter_api.exception.professional.ProfessionalNotFoundException;
 import com.tpfinal.sportcenter_api.exception.servicetype.ServiceTypeNotFoundException;
 import com.tpfinal.sportcenter_api.repository.appointment.JpaAppointmentRepository;
@@ -138,6 +139,21 @@ class AppointmentCreatorServiceTest {
         assertThatThrownBy(() -> service.create(request(), owner))
                 .isInstanceOf(ProfessionalNotFoundException.class);
 
+        verify(jpaAppointmentRepository, never()).save(any());
+    }
+
+    // Un profesional inactivo no toma reservas nuevas: se corta antes de
+    // consultar el service type y de guardar.
+    @Test
+    void create_throwsWhenProfessionalIsInactive() {
+        professional.setActive(false);
+        when(jpaProfessionalRepository.findById(2L)).thenReturn(Optional.of(professional));
+
+        assertThatThrownBy(() -> service.create(request(), owner))
+                .isInstanceOf(ProfessionalInactiveException.class)
+                .hasMessageContaining("2");
+
+        verify(jpaServiceTypeRepository, never()).findById(any());
         verify(jpaAppointmentRepository, never()).save(any());
     }
 

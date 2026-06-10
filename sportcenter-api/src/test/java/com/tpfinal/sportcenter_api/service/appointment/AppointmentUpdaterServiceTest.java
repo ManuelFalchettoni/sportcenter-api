@@ -10,6 +10,7 @@ import com.tpfinal.sportcenter_api.enums.appointment.AppointmentStatusEnum;
 import com.tpfinal.sportcenter_api.enums.user.UserEnum;
 import com.tpfinal.sportcenter_api.exception.appointment.AppointmentOverlapException;
 import com.tpfinal.sportcenter_api.exception.appointment.UserAppointmentOverlapException;
+import com.tpfinal.sportcenter_api.exception.professional.ProfessionalInactiveException;
 import com.tpfinal.sportcenter_api.repository.appointment.JpaAppointmentRepository;
 import com.tpfinal.sportcenter_api.repository.professional.JpaProfessionalRepository;
 import com.tpfinal.sportcenter_api.repository.servicetype.JpaServiceTypeRepository;
@@ -139,6 +140,42 @@ class AppointmentUpdaterServiceTest {
                 .isInstanceOf(IllegalArgumentException.class);
 
         verify(jpaAppointmentRepository, never()).save(any()); // no guarda nada
+    }
+
+    // Cambiar el turno hacia un profesional inactivo se rechaza: a un inactivo
+    // no se le dirigen reservas nuevas.
+    @Test
+    void update_throwsWhenChangingToInactiveProfessional() {
+        Professional inactive = new Professional("Dr. Retirado", "Clinica", false);
+        inactive.setId(5L);
+        when(appointmentFinderService.find(10L)).thenReturn(existing);
+        when(jpaProfessionalRepository.findById(5L)).thenReturn(Optional.of(inactive));
+
+        AppointmentRequest req = new AppointmentRequest(start, end, "nota", 5L, 3L);
+
+        assertThatThrownBy(() -> service.update(10L, req, owner))
+                .isInstanceOf(ProfessionalInactiveException.class)
+                .hasMessageContaining("5");
+
+        verify(jpaAppointmentRepository, never()).save(any());
+    }
+
+    // Conservar el mismo profesional aunque se haya desactivado después de la
+    // reserva SÍ se permite: el turno existente se sigue gestionando
+    // (reprogramar, editar notas); lo bloqueado es dirigirle reservas nuevas.
+    @Test
+    void update_allowsKeepingSameProfessionalEvenIfNowInactive() {
+        professional.setActive(false); // se desactivó después de reservar
+        when(appointmentFinderService.find(10L)).thenReturn(existing);
+        when(jpaProfessionalRepository.findById(2L)).thenReturn(Optional.of(professional));
+        when(jpaServiceTypeRepository.findById(3L)).thenReturn(Optional.of(serviceType));
+        when(jpaAppointmentRepository.save(any(Appointment.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        AppointmentResponse response = service.update(10L, request(), owner);
+
+        assertThat(response.getNotes()).isEqualTo("nueva nota");
+        verify(jpaAppointmentRepository).save(existing);
     }
 
     // Doble reserva al actualizar: el validador de solapamiento rechaza el rango

@@ -343,6 +343,7 @@ Reglas:
 
 - `endTime` debe ser estrictamente posterior a `startTime`; caso contrario responde `400 Bad Request`.
 - `professionalId` y `serviceTypeId` deben referenciar entidades existentes; caso contrario `404 Not Found`.
+- **El profesional debe estar activo** (`active = true`); reservar con uno inactivo responde `409 Conflict` (`ProfessionalInactiveException`). En el `PUT` la regla aplica solo al **cambiar** de profesional: un turno existente cuyo profesional se desactivó después de la reserva se puede seguir gestionando (reprogramar, editar notas, cancelar), pero a un inactivo no se le dirigen reservas nuevas.
 - **Sin doble reserva del profesional:** un profesional no puede tener dos turnos activos que se solapen. Si el rango pedido pisa otro turno del mismo profesional, responde `409 Conflict` (`AppointmentOverlapException`).
 - **Sin doble reserva del usuario:** un usuario tampoco puede tener dos turnos activos a la misma hora, **aunque sean con profesionales distintos** (una persona no puede estar en dos lugares a la vez). Responde `409 Conflict` (`UserAppointmentOverlapException`). En el `PUT` se valida contra el dueño del turno, no contra el caller: un ADMIN editando un turno ajeno no compromete su propia agenda.
 - En ambos casos, en el `PUT` el propio turno que se edita no cuenta como solapamiento.
@@ -454,7 +455,7 @@ Adicionalmente, Bean Validation está activado en los callbacks pre-persist y pr
 | `401 Unauthorized` | Falta el token, o es inválido/expirado; o credenciales inválidas en el login. |
 | `403 Forbidden` | Autenticado pero sin permisos: un no-ADMIN en un endpoint de admin, o un usuario operando sobre un turno ajeno. |
 | `404 Not Found` | Recurso inexistente (usuario, profesional, service type o turno). |
-| `409 Conflict` | `username`/`email` duplicado, turno solapado (con otro turno del profesional o del propio usuario), turno ya cancelado, o confirmación de un turno que no está `PENDING`. |
+| `409 Conflict` | `username`/`email` duplicado, turno solapado (con otro turno del profesional o del propio usuario), turno ya cancelado, confirmación de un turno que no está `PENDING`, o reserva con un profesional inactivo. |
 | `500 Internal Server Error` | Error inesperado; el detalle se loguea en el servidor y **no** se expone al cliente. |
 
 Todos comparten el mismo formato de body de arriba. `GlobalExceptionHandler` es la única fuente de verdad: por eso las excepciones de dominio no usan `@ResponseStatus`.
@@ -486,7 +487,7 @@ cd sportcenter-api
 
 **Tests unitarios de servicios** (Mockito puro sobre la capa de lógica de negocio):
 
-- `AppointmentCreatorServiceTest` / `AppointmentUpdaterServiceTest` — alta y actualización de turnos: rango horario inválido (`endTime <= startTime`), entidades inexistentes (professional/serviceType), que un solapamiento rechazado por el validador corte la operación, que el turno se cree a nombre del usuario autenticado y que un caller ajeno sea rechazado (**ownership**).
+- `AppointmentCreatorServiceTest` / `AppointmentUpdaterServiceTest` — alta y actualización de turnos: rango horario inválido (`endTime <= startTime`), entidades inexistentes (professional/serviceType), **profesional inactivo** (rechazado al crear y al cambiar de profesional; permitido al conservar el mismo), que un solapamiento rechazado por el validador corte la operación, que el turno se cree a nombre del usuario autenticado y que un caller ajeno sea rechazado (**ownership**).
 - `AppointmentOverlapValidatorTest` — la **detección de solapamiento** en sus dos ejes: turnos del profesional y turnos del usuario (con cualquier profesional), tanto al crear como al actualizar (donde el propio turno editado no cuenta como choque).
 - `AppointmentFinderServiceTest` / `UserFinderServiceTest` — recuperación por id, `NotFoundException` y, en la variante con caller, el chequeo de ownership.
 - `ProfessionalAvailabilityServiceTest` — agenda ocupada de un día: ventana de fechas correcta (excluye `CANCELLED`), lista vacía si el día está libre y `404` si el profesional no existe.

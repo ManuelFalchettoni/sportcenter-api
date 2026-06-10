@@ -6,6 +6,7 @@ import com.tpfinal.sportcenter_api.entity.appointment.Appointment;
 import com.tpfinal.sportcenter_api.entity.professional.Professional;
 import com.tpfinal.sportcenter_api.entity.servicetype.ServiceType;
 import com.tpfinal.sportcenter_api.entity.user.User;
+import com.tpfinal.sportcenter_api.exception.professional.ProfessionalInactiveException;
 import com.tpfinal.sportcenter_api.exception.professional.ProfessionalNotFoundException;
 import com.tpfinal.sportcenter_api.exception.servicetype.ServiceTypeNotFoundException;
 import com.tpfinal.sportcenter_api.repository.appointment.JpaAppointmentRepository;
@@ -57,6 +58,16 @@ public class AppointmentUpdaterService {
 
         Professional professional = jpaProfessionalRepository.findById(request.getProfessionalId())
                 .orElseThrow(() -> new ProfessionalNotFoundException(request.getProfessionalId()));
+
+        // Solo se valida active al CAMBIAR de profesional: un turno existente con
+        // un profesional desactivado después de la reserva se puede seguir
+        // gestionando (reprogramar, editar notas, cancelar), pero no se le
+        // dirigen reservas nuevas a un inactivo.
+        boolean changingProfessional = !professional.getId().equals(appointment.getProfessional().getId());
+        if (changingProfessional && !Boolean.TRUE.equals(professional.getActive())) {
+            throw new ProfessionalInactiveException(professional.getId());
+        }
+
         ServiceType serviceType = jpaServiceTypeRepository.findById(request.getServiceTypeId())
                 .orElseThrow(() -> new ServiceTypeNotFoundException(request.getServiceTypeId()));
 

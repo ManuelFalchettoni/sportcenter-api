@@ -6,6 +6,7 @@ import com.tpfinal.sportcenter_api.entity.professional.Professional;
 import com.tpfinal.sportcenter_api.entity.servicetype.ServiceType;
 import com.tpfinal.sportcenter_api.entity.user.User;
 import com.tpfinal.sportcenter_api.enums.appointment.AppointmentStatusEnum;
+import com.tpfinal.sportcenter_api.exception.professional.ProfessionalInactiveException;
 import com.tpfinal.sportcenter_api.exception.professional.ProfessionalNotFoundException;
 import com.tpfinal.sportcenter_api.exception.servicetype.ServiceTypeNotFoundException;
 import com.tpfinal.sportcenter_api.repository.appointment.JpaAppointmentRepository;
@@ -49,6 +50,12 @@ public class AppointmentCreatorService {
 
         Professional professional = jpaProfessionalRepository.findById(request.getProfessionalId())
                 .orElseThrow(() -> new ProfessionalNotFoundException(request.getProfessionalId()));
+
+        // Un profesional inactivo no toma reservas nuevas.
+        if (!Boolean.TRUE.equals(professional.getActive())) {
+            throw new ProfessionalInactiveException(professional.getId());
+        }
+
         ServiceType serviceType = jpaServiceTypeRepository.findById(request.getServiceTypeId())
                 .orElseThrow(() -> new ServiceTypeNotFoundException(request.getServiceTypeId()));
 
