@@ -279,11 +279,35 @@ Turno reservado entre un usuario y un profesional para un tipo de servicio deter
 | Método | Path                  | Descripción                       | Acceso          | Respuesta                              |
 |--------|-----------------------|-----------------------------------|-----------------|----------------------------------------|
 | GET    | `/{id}`               | Obtiene un turno por id           | Dueño o ADMIN   | `200 OK` · `AppointmentResponse`       |
-| GET    | `?page=&size=&sort=`  | Lista paginada (ADMIN ve todos; USER solo los suyos) | Autenticado | `200 OK` · `Page<AppointmentResponse>` |
+| GET    | `?page=&size=&sort=&from=&to=&status=&professionalId=` | Lista paginada y filtrable (ADMIN ve todos; USER solo los suyos) | Autenticado | `200 OK` · `Page<AppointmentResponse>` |
 | POST   | `/`                   | Crea un turno a nombre del autenticado | Autenticado | `201 Created` · `AppointmentResponse`  |
 | PUT    | `/{id}`               | Actualiza un turno                | Dueño o ADMIN   | `200 OK` · `AppointmentResponse`       |
 | PATCH  | `/{id}/cancel`        | Cancela un turno (soft delete)    | Dueño o ADMIN   | `200 OK` · `AppointmentResponse`       |
 | DELETE | `/{id}`               | Elimina un turno                  | Dueño o ADMIN   | `204 No Content`                       |
+
+##### Filtros del listado
+
+`GET /sportcenter/appointments` acepta, además de la paginación, estos query params opcionales (se combinan con **AND**; los que no se envían no filtran):
+
+| Param            | Tipo / formato                        | Filtra por |
+|------------------|---------------------------------------|------------|
+| `from`           | ISO date-time (`2026-07-01T00:00:00`) | turnos con `startTime >= from` |
+| `to`             | ISO date-time                         | turnos con `startTime <= to` |
+| `status`         | `PENDING` \| `CONFIRMED` \| `CANCELLED` | estado exacto |
+| `professionalId` | Long                                  | turnos de ese profesional |
+
+Ejemplos:
+
+```
+GET /sportcenter/appointments?from=2026-07-01T00:00:00&to=2026-07-31T23:59:59   # vista de calendario (julio)
+GET /sportcenter/appointments?from=2026-06-10T15:00:00&status=PENDING&sort=startTime,asc   # mis próximos turnos
+```
+
+Reglas:
+
+- Un valor mal formado (`status` fuera del enum, fecha no-ISO) responde `400 Bad Request`. `from` posterior a `to` también es `400`.
+- Los filtros **no relajan el ownership**: un `USER` filtra siempre dentro de sus propios turnos; un ADMIN sobre todos.
+- Implementación: los filtros se traducen a `Specification`s (`AppointmentSpecifications`) combinadas con AND y ejecutadas vía el `JpaSpecificationExecutor` del repositorio, así una sola consulta resuelve cualquier combinación sin un derived query por cada una. La condición de ownership del `USER` es una specification más, siempre presente para no-ADMIN.
 
 ##### Ownership
 
@@ -441,6 +465,7 @@ cd sportcenter-api
 - `AppointmentOverlapValidatorTest` — la **detección de solapamiento** en sus dos ejes: turnos del profesional y turnos del usuario (con cualquier profesional), tanto al crear como al actualizar (donde el propio turno editado no cuenta como choque).
 - `AppointmentFinderServiceTest` / `UserFinderServiceTest` — recuperación por id, `NotFoundException` y, en la variante con caller, el chequeo de ownership.
 - `ProfessionalAvailabilityServiceTest` — agenda ocupada de un día: ventana de fechas correcta (excluye `CANCELLED`), lista vacía si el día está libre y `404` si el profesional no existe.
+- `AppointmentGetAllServiceTest` — listado filtrable: consulta por specification, passthrough de la página y `400` si `from` es posterior a `to` (sin tocar la base).
 - `JwtServiceTest` — generación y validación de tokens: token recién emitido válido, extracción del username (subject), rechazo de tokens basura, expirados o firmados con otra clave.
 - `LoginServiceTest` — login OK, normalización del email, `401` con credenciales inválidas y la **mitigación de timing** (verificación contra el hash señuelo cuando el email no existe).
 - `UserCreatorServiceTest` — normalización (trim/lowercase), hasheo de password, rol forzado a `USER` y `409` por username/email duplicado.
@@ -453,6 +478,7 @@ cd sportcenter-api
 - `UserPostControllerTest` — `201` (y que la respuesta **nunca expone el password**), `409` duplicado, `400` por validación.
 - `AppointmentPostControllerTest` — `201`, `404` entidad inexistente, `409` solapamiento, `400` por rango/fecha (`@Future`) o campos faltantes.
 - `ProfessionalAvailabilityControllerTest` — `200` con los slots (y que **no se filtra** ningún dato del turno ni del usuario), `404` profesional inexistente, `400` por `date` faltante o mal formado.
+- `AppointmentGetAllControllerTest` — parseo de los cuatro filtros hacia el servicio, `200` sin filtros, `400` por `status` inválido, fecha mal formada o `from > to`.
 
 > El test `contextLoads()` (`@SpringBootTest`) sí requiere una base de datos disponible, por eso queda fuera del filtro de arriba.
 

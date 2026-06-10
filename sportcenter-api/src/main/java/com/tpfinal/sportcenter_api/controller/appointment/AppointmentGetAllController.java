@@ -1,19 +1,25 @@
 package com.tpfinal.sportcenter_api.controller.appointment;
 
 import com.tpfinal.sportcenter_api.config.UserPrincipal;
+import com.tpfinal.sportcenter_api.dto.request.appointment.AppointmentFilterRequest;
 import com.tpfinal.sportcenter_api.dto.response.appointment.AppointmentResponse;
-import com.tpfinal.sportcenter_api.entity.appointment.Appointment;
+import com.tpfinal.sportcenter_api.enums.appointment.AppointmentStatusEnum;
 import com.tpfinal.sportcenter_api.service.appointment.AppointmentGetAllService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.time.LocalDateTime;
+
 /**
- * Controlador REST que expone el listado paginado de turnos.
+ * Controlador REST que expone el listado paginado de turnos, con filtros
+ * opcionales por rango de fechas, estado y profesional.
  * Ruta base: /sportcenter/appointments.
  */
 @RestController
@@ -27,11 +33,23 @@ public class AppointmentGetAllController {
 
     /**
      * Lista turnos en forma paginada. Un ADMIN ve todos; un USER los propios.
+     * Filtros opcionales (se combinan con AND):
+     * - from / to: rango sobre startTime, inclusive, en ISO yyyy-MM-dd'T'HH:mm:ss.
+     * - status: PENDING | CONFIRMED | CANCELLED.
+     * - professionalId: turnos de un profesional.
+     * Un valor mal formado responde 400 (handler de type mismatch).
      */
     @GetMapping
-    public ResponseEntity<Page<AppointmentResponse>> findAll(Pageable pageable,
-                                                             @AuthenticationPrincipal UserPrincipal principal) {
-        Page<AppointmentResponse> response = appointmentGetAllService.findAll(pageable, principal.getUser())
+    public ResponseEntity<Page<AppointmentResponse>> findAll(
+            Pageable pageable,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime from,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime to,
+            @RequestParam(required = false) AppointmentStatusEnum status,
+            @RequestParam(required = false) Long professionalId,
+            @AuthenticationPrincipal UserPrincipal principal) {
+        AppointmentFilterRequest filter = new AppointmentFilterRequest(from, to, status, professionalId);
+        Page<AppointmentResponse> response = appointmentGetAllService
+                .findAll(pageable, principal.getUser(), filter)
                 .map(AppointmentResponse::toResponse);
         return ResponseEntity.ok(response);
     }
