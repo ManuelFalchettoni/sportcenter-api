@@ -295,6 +295,7 @@ Turno reservado entre un usuario y un profesional para un tipo de servicio deter
 | GET    | `?page=&size=&sort=&from=&to=&status=&professionalId=` | Lista paginada y filtrable (ADMIN ve todos; USER solo los suyos) | Autenticado | `200 OK` · `Page<AppointmentResponse>` |
 | POST   | `/`                   | Crea un turno a nombre del autenticado | Autenticado | `201 Created` · `AppointmentResponse`  |
 | PUT    | `/{id}`               | Actualiza un turno                | Dueño o ADMIN   | `200 OK` · `AppointmentResponse`       |
+| PATCH  | `/{id}/confirm`       | Confirma un turno pendiente       | ADMIN           | `200 OK` · `AppointmentResponse`       |
 | PATCH  | `/{id}/cancel`        | Cancela un turno (soft delete)    | Dueño o ADMIN   | `200 OK` · `AppointmentResponse`       |
 | DELETE | `/{id}`               | Elimina un turno                  | Dueño o ADMIN   | `204 No Content`                       |
 
@@ -346,6 +347,17 @@ Reglas:
 - **Sin doble reserva del usuario:** un usuario tampoco puede tener dos turnos activos a la misma hora, **aunque sean con profesionales distintos** (una persona no puede estar en dos lugares a la vez). Responde `409 Conflict` (`UserAppointmentOverlapException`). En el `PUT` se valida contra el dueño del turno, no contra el caller: un ADMIN editando un turno ajeno no compromete su propia agenda.
 - En ambos casos, en el `PUT` el propio turno que se edita no cuenta como solapamiento.
 - En el `POST`, el turno se crea con `status = PENDING` y `createdAt` se setea al momento actual.
+
+##### Confirmación
+
+`PATCH /sportcenter/appointments/{id}/confirm` pasa un turno de `PENDING` a `CONFIRMED`:
+
+- **Solo ADMIN**: la confirmación es la aceptación de la reserva por parte del centro (el dueño ya expresó su intención al crear el turno). Un autenticado sin ese rol recibe `403 Forbidden`.
+- Setea `status = CONFIRMED` y `statusModifiedAt = now()`.
+- Solo un turno `PENDING` puede confirmarse. Confirmar uno ya `CONFIRMED` (operación repetida) o uno `CANCELLED` responde `409 Conflict` (`AppointmentNotPendingException`). La cancelación es definitiva a propósito: el horario liberado pudo haberse vuelto a reservar, así que "des-cancelar" no existe — se crea un turno nuevo.
+- Si el id no existe, `404 Not Found`.
+
+El ciclo de vida completo queda: `PENDING` → `CONFIRMED` (admin confirma) y `PENDING`/`CONFIRMED` → `CANCELLED` (dueño o admin cancelan). No hay más transiciones. Cada transición tiene su endpoint de acción (`/confirm`, `/cancel`) en lugar de un `PATCH /status` genérico: los permisos difieren por transición (confirmar es solo-ADMIN, cancelar es dueño-o-ADMIN) y así cada regla vive declarativa en su endpoint, sin un `switch` de transiciones con chequeos de rol imperativos.
 
 ##### Cancelación (soft delete)
 
@@ -442,7 +454,7 @@ Adicionalmente, Bean Validation está activado en los callbacks pre-persist y pr
 | `401 Unauthorized` | Falta el token, o es inválido/expirado; o credenciales inválidas en el login. |
 | `403 Forbidden` | Autenticado pero sin permisos: un no-ADMIN en un endpoint de admin, o un usuario operando sobre un turno ajeno. |
 | `404 Not Found` | Recurso inexistente (usuario, profesional, service type o turno). |
-| `409 Conflict` | `username`/`email` duplicado, turno solapado (con otro turno del profesional o del propio usuario), o turno ya cancelado. |
+| `409 Conflict` | `username`/`email` duplicado, turno solapado (con otro turno del profesional o del propio usuario), turno ya cancelado, o confirmación de un turno que no está `PENDING`. |
 | `500 Internal Server Error` | Error inesperado; el detalle se loguea en el servidor y **no** se expone al cliente. |
 
 Todos comparten el mismo formato de body de arriba. `GlobalExceptionHandler` es la única fuente de verdad: por eso las excepciones de dominio no usan `@ResponseStatus`.
@@ -479,6 +491,7 @@ cd sportcenter-api
 - `AppointmentFinderServiceTest` / `UserFinderServiceTest` — recuperación por id, `NotFoundException` y, en la variante con caller, el chequeo de ownership.
 - `ProfessionalAvailabilityServiceTest` — agenda ocupada de un día: ventana de fechas correcta (excluye `CANCELLED`), lista vacía si el día está libre y `404` si el profesional no existe.
 - `AppointmentGetAllServiceTest` — listado filtrable: consulta por specification, passthrough de la página y `400` si `from` es posterior a `to` (sin tocar la base).
+- `AppointmentConfirmServiceTest` — confirmación: `PENDING → CONFIRMED` con `statusModifiedAt`, `409` si ya está confirmado o cancelado (sin persistir) y `404` propagado del finder.
 - `JwtServiceTest` — generación y validación de tokens: token recién emitido válido, extracción del username (subject), rechazo de tokens basura, expirados o firmados con otra clave.
 - `LoginServiceTest` — login OK, normalización del email, `401` con credenciales inválidas y la **mitigación de timing** (verificación contra el hash señuelo cuando el email no existe).
 - `UserCreatorServiceTest` — normalización (trim/lowercase), hasheo de password, rol forzado a `USER` y `409` por username/email duplicado.
@@ -493,6 +506,7 @@ cd sportcenter-api
 - `AppointmentPostControllerTest` — `201`, `404` entidad inexistente, `409` solapamiento, `400` por rango/fecha (`@Future`) o campos faltantes.
 - `ProfessionalAvailabilityControllerTest` — `200` con los slots (y que **no se filtra** ningún dato del turno ni del usuario), `404` profesional inexistente, `400` por `date` faltante o mal formado.
 - `AppointmentGetAllControllerTest` — parseo de los cuatro filtros hacia el servicio, `200` sin filtros, `400` por `status` inválido, fecha mal formada o `from > to`.
+- `AppointmentConfirmControllerTest` — `200` con el turno confirmado, `409` si no está `PENDING`, `404` si no existe.
 
 > El test `contextLoads()` (`@SpringBootTest`) sí requiere una base de datos disponible, por eso queda fuera del filtro de arriba.
 
