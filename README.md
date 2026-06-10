@@ -51,9 +51,27 @@ Respuesta `200 OK`:
 
 Si el email no existe **o** la contraseña es incorrecta, responde `401 Unauthorized` con el mismo mensaje genérico (`"Invalid email or password."`). Es deliberado: no se revela si un email está registrado, para evitar la enumeración de usuarios.
 
+#### `GET /sportcenter/auth/me`
+
+Devuelve el usuario autenticado actual (el dueño del token). Requiere `Authorization: Bearer <token>`; sin token responde `401`.
+
+Respuesta `200 OK`:
+
+```json
+{
+  "id": 7,
+  "username": "manu",
+  "email": "manu@example.com",
+  "role": "USER",
+  "createdDate": "2026-01-15T10:00:00"
+}
+```
+
+Es el primer request que hace el frontend después del login: el token no lleva el id ni el email del usuario, y sin el id no se puede llamar a `GET /users/{id}` ni decidir qué UI mostrar según el rol. Como el usuario se carga desde la DB en cada request, la respuesta siempre refleja el estado actual (p. ej. un cambio de rol reciente).
+
 #### Rutas públicas vs. protegidas
 
-- **Públicas:** `/sportcenter/auth/**` (login) y el registro `POST /sportcenter/users`.
+- **Públicas:** `/sportcenter/auth/**` (login) y el registro `POST /sportcenter/users`. Excepción: `GET /sportcenter/auth/me` requiere token (la regla específica se declara antes del `permitAll` de `/auth/**`, y en Spring Security gana la primera que matchea).
 - **Protegidas:** cualquier otra ruta requiere un token válido; sin él se responde `401 Unauthorized`.
 - **Solo ADMIN** (`@PreAuthorize("hasRole('ADMIN')")` — un autenticado sin ese rol recibe `403 Forbidden`):
   - Gestión de usuarios: listar, actualizar, borrar y cambiar rol. Ver un usuario por id permite además al **propio usuario** (`hasRole('ADMIN') or #id == principal.id`).
@@ -70,6 +88,16 @@ El token **solo prueba identidad**. En cada request, `JwtFilter` valida la firma
 - Un usuario **borrado** pierde acceso al instante, aunque su token siga vigente (`401`).
 - Un **cambio de rol** (`PATCH /users/{id}/role`) tiene efecto inmediato, sin esperar a que expire el token.
 - Los controllers pueden recibir el usuario completo con `@AuthenticationPrincipal UserPrincipal`.
+
+#### CORS
+
+La API acepta requests de navegador solo desde los orígenes listados en `cors.allowed-origins` (`application.properties`, separados por coma). Por defecto vienen habilitados los puertos locales típicos de desarrollo frontend:
+
+```properties
+cors.allowed-origins=http://localhost:5173,http://localhost:3000
+```
+
+La configuración (bean `CorsConfigurationSource` en `SecurityConfig`) permite los métodos `GET/POST/PUT/PATCH/DELETE/OPTIONS` y los headers `Authorization` y `Content-Type`, y expone `Location` (necesario para que el JS pueda leer la URL del recurso creado en los `201 Created`). No se habilita `allowCredentials` porque el JWT viaja en el header `Authorization`, no en cookies. Para desplegar el frontend en otro origen, basta con agregarlo a la lista.
 
 ---
 
@@ -395,6 +423,7 @@ cd sportcenter-api
 **Tests de integración de controllers** (`@WebMvcTest` + `MockMvc`, servicios mockeados): verifican routing, validación `@Valid` y que `GlobalExceptionHandler` traduzca cada caso al status y body correctos.
 
 - `AuthLoginControllerTest` — `200` con token, `401` credenciales inválidas, `400` por validación del body.
+- `AuthMeControllerTest` — `200` con los datos del usuario autenticado (y que la respuesta **nunca expone el password**).
 - `UserPostControllerTest` — `201` (y que la respuesta **nunca expone el password**), `409` duplicado, `400` por validación.
 - `AppointmentPostControllerTest` — `201`, `404` entidad inexistente, `409` solapamiento, `400` por rango/fecha (`@Future`) o campos faltantes.
 
