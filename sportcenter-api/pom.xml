@@ -53,6 +53,15 @@
 			<scope>runtime</scope>
 		</dependency>
 
+		<!-- springdoc: genera la spec OpenAPI (/v3/api-docs) y Swagger UI
+		     (/swagger-ui.html) leyendo los controllers en el arranque.
+		     La rama 3.x es la compatible con Spring Boot 4. -->
+		<dependency>
+			<groupId>org.springdoc</groupId>
+			<artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+			<version>3.0.0</version>
+		</dependency>
+
 		<!-- JJWT: API en compile, impl + jackson en runtime (no se programa contra ellos). -->
 		<dependency>
 			<groupId>io.jsonwebtoken</groupId>

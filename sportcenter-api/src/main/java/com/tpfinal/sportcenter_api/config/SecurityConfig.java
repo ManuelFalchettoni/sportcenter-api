@@ -63,6 +63,9 @@ public class SecurityConfig {
                         .requestMatchers("/sportcenter/auth/**").permitAll()
                         // Crear un usuario (registro) mediante POST también es público
                         .requestMatchers(HttpMethod.POST, "/sportcenter/users").permitAll()
+                        // Documentación OpenAPI: la spec JSON y Swagger UI son públicas
+                        // (los endpoints protegidos igual exigen token al ejecutarlos)
+                        .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                         // Cualquier otra ruta no especificada arriba requiere estar logueado
                         .anyRequest().authenticated()
                 )

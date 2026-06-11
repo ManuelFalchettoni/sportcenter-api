@@ -6,6 +6,7 @@ Sistema de turnos para centro deportivo — Spring Boot REST API.
 
 - Java 21
 - Spring Boot 4.0.6 (Web, Data JPA, Security, Validation)
+- springdoc-openapi (documentación interactiva — ver sección siguiente)
 - MySQL
 - Maven
 
@@ -19,6 +20,75 @@ cd sportcenter-api
 ```
 
 La aplicación queda escuchando por defecto en `http://localhost:8080`.
+
+---
+
+## Documentación interactiva (OpenAPI / Swagger)
+
+La API se autodocumenta con **springdoc-openapi**: en el arranque escanea los controllers y DTOs y genera una especificación [OpenAPI 3.1](https://spec.openapis.org/oas/latest.html) — rutas, parámetros, esquemas de request/response y las restricciones de Bean Validation salen del código, así que la doc nunca se desactualiza. Con la app corriendo:
+
+| URL | Qué es |
+|-----|--------|
+| `http://localhost:8080/swagger-ui.html` | **Swagger UI**: doc navegable + probar endpoints desde el navegador |
+| `http://localhost:8080/v3/api-docs` | La especificación OpenAPI en JSON (para generadores de clientes) |
+
+Ambas rutas son públicas (ver `SecurityConfig`); los endpoints protegidos igual exigen token al ejecutarlos.
+
+### Probar endpoints desde Swagger UI
+
+1. Abrir `http://localhost:8080/swagger-ui.html`.
+2. Ejecutar `POST /sportcenter/auth/login` (desplegar el endpoint → **Try it out** → completar email/password → **Execute**) y copiar el `token` de la respuesta.
+3. Click en el botón **Authorize** (candado, arriba a la derecha), pegar el token (sin el prefijo `Bearer`, lo agrega solo) y confirmar.
+4. Desde ahí, todos los **Try it out** mandan el `Authorization: Bearer <token>` automáticamente. Reemplaza a Postman para pruebas manuales.
+
+El esquema Bearer no es deducible del código: se declara en `OpenApiConfig` (`config/OpenApiConfig.java`), junto con el título y la descripción que muestra la UI.
+
+### Generar el cliente TypeScript del frontend
+
+La spec JSON permite **autogenerar los tipos y el cliente HTTP** del frontend, en lugar de escribirlos a mano copiando de este README. Con [`openapi-typescript`](https://openapi-ts.dev/) + `openapi-fetch` (la opción más liviana):
+
+```bash
+# en el proyecto frontend, con el backend corriendo
+npm install -D openapi-typescript
+npm install openapi-fetch
+
+npx openapi-typescript http://localhost:8080/v3/api-docs -o src/api/schema.d.ts
+```
+
+Eso genera los tipos de todos los DTOs y endpoints. El cliente se crea una vez:
+
+```typescript
+// src/api/client.ts
+import createClient from "openapi-fetch";
+import type { paths } from "./schema";
+
+export const api = createClient<paths>({ baseUrl: "http://localhost:8080" });
+
+api.use({
+  onRequest({ request }) {
+    const token = localStorage.getItem("token");
+    if (token) request.headers.set("Authorization", `Bearer ${token}`);
+    return request;
+  },
+});
+```
+
+Y el uso queda tipado de punta a punta — parámetros, enums y respuestas los valida el compilador:
+
+```typescript
+const { data } = await api.GET("/sportcenter/appointments", {
+  params: { query: { status: "PENDING" } },  // "DONE" no compilaría: no existe en el enum
+});
+```
+
+**El flujo ante cambios del backend:** se modifica un DTO o endpoint → se vuelve a correr `npx openapi-typescript ...` → TypeScript marca en compilación cada lugar del frontend que quedó desincronizado. Sin esto, ese desfase aparece como bug en runtime (a menudo silencioso: un campo renombrado simplemente llega `undefined`).
+
+> Alternativa: [`orval`](https://orval.dev/) consume la misma spec y genera directamente hooks de React Query (`useGetAvailability(...)` con loading/caching incluidos).
+
+### Notas
+
+- La doc generada cubre el **contrato** (rutas, tipos, validaciones). Las **reglas de negocio** (solapamientos, ownership, ciclo de vida del turno, qué dispara cada `409`) viven en este README.
+- Para apagar la doc en un despliegue (p. ej. producción): `springdoc.api-docs.enabled=false` y `springdoc.swagger-ui.enabled=false` en el profile correspondiente.
 
 ---
 
