@@ -46,6 +46,15 @@ public class JwtService {
                 .compact();
     }
 
+    /**
+     * Vida del token en segundos (convención OAuth2 para expires_in).
+     * Lo usa el login para informarle la duración al cliente sin que este
+     * tenga que decodificar el claim exp del JWT.
+     */
+    public Long getExpirationSeconds() {
+        return expirationMs / 1000;
+    }
+
     /** True si la firma es válida y el token no expiró. */
     public boolean isValid(String token) {
         try {

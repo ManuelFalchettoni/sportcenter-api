@@ -57,6 +57,6 @@ public class LoginService {
         }
 
         String token = jwtService.generateToken(user.getUsername(), user.getRole());
-        return new LoginResponse(token);
+        return new LoginResponse(token, jwtService.getExpirationSeconds());
     }
 }

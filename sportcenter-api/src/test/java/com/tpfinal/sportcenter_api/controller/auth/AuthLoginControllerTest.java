@@ -52,9 +52,9 @@ class AuthLoginControllerTest {
     // Login OK -> 200 con el token en el cuerpo.
     @Test
     void login_returns200WithToken() throws Exception {
-        // El servicio (mockeado) devuelve un token cualquiera.
+        // El servicio (mockeado) devuelve un token cualquiera con su duración.
         when(loginService.login(any(LoginRequest.class)))
-                .thenReturn(new LoginResponse("signed.jwt.token"));
+                .thenReturn(new LoginResponse("signed.jwt.token", 28800L));
 
         // perform: ejecuta un POST con cuerpo JSON. andExpect: verifica la respuesta.
         mockMvc.perform(post("/sportcenter/auth/login")
@@ -63,7 +63,8 @@ class AuthLoginControllerTest {
                 .andExpect(status().isOk()) // 200
                 // jsonPath navega el JSON de respuesta: $ = raíz, .token = campo.
                 .andExpect(jsonPath("$.token").value("signed.jwt.token"))
-                .andExpect(jsonPath("$.tokenType").value("Bearer"));
+                .andExpect(jsonPath("$.tokenType").value("Bearer"))
+                .andExpect(jsonPath("$.expiresIn").value(28800));
     }
 
     // Credenciales inválidas -> el servicio lanza la excepción y el handler la

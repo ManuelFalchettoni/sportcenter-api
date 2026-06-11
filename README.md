@@ -45,9 +45,13 @@ Respuesta `200 OK`:
 
 ```json
 {
-  "token": "eyJhbGciOiJIUzI1NiJ9..."
+  "token": "eyJhbGciOiJIUzI1NiJ9...",
+  "tokenType": "Bearer",
+  "expiresIn": 28800
 }
 ```
+
+`expiresIn` es la vida del token **en segundos** (convención OAuth2): el frontend puede anticipar la expiración (avisar, redirigir al login) sin decodificar el claim `exp` del JWT.
 
 Si el email no existe **o** la contraseña es incorrecta, responde `401 Unauthorized` con el mismo mensaje genérico (`"Invalid email or password."`). Es deliberado: no se revela si un email está registrado, para evitar la enumeración de usuarios.
 
@@ -81,7 +85,7 @@ Cada tabla de endpoints indica el permiso requerido en la columna **Acceso**.
 
 #### Cómo se autentica cada request (JWT + UserDetails)
 
-El token lleva el `username` como subject y expira según `jwt.expiration` (1 hora por defecto). Las sesiones son *stateless*: no se guarda estado en el servidor.
+El token lleva el `username` como subject y expira según `jwt.expiration` (8 horas por defecto: cubre una jornada de uso sin desloguear al usuario a mitad de sesión). Las sesiones son *stateless*: no se guarda estado en el servidor. No hay refresh tokens: la duración del access token **es** la duración de la sesión; al expirar, se vuelve a hacer login.
 
 El token **solo prueba identidad**. En cada request, `JwtFilter` valida la firma, extrae el username y carga el usuario real desde la base (`CustomUserDetailsService` → `UserPrincipal`, el adaptador `UserDetails` que envuelve la entidad). El rol con el que se autoriza sale siempre de la DB, no del token; el claim `role` que viaja en el JWT es solo informativo para el cliente. Consecuencias:
 

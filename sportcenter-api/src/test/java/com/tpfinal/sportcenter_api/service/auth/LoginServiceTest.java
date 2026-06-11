@@ -60,12 +60,15 @@ class LoginServiceTest {
         // matches(plano, hash) = true significa "la contraseña es correcta".
         when(passwordEncoder.matches("secret123", "$2a$10$realhash")).thenReturn(true);
         when(jwtService.generateToken("juan", UserEnum.USER)).thenReturn("signed.jwt.token");
+        when(jwtService.getExpirationSeconds()).thenReturn(28800L);
 
         // Mandamos el email con espacios y mayúsculas a propósito: el servicio
         // lo normaliza (trim + lowercase) y por eso el lookup de arriba matchea.
         LoginResponse response = service.login(new LoginRequest("  Juan@Mail.com ", "secret123"));
 
         assertThat(response.getToken()).isEqualTo("signed.jwt.token");
+        // El frontend recibe la duración en segundos sin decodificar el JWT.
+        assertThat(response.getExpiresIn()).isEqualTo(28800L);
     }
 
     // Email inexistente -> error genérico (no revela si el email existe).
