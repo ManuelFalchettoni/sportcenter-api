@@ -6,8 +6,10 @@ import com.tpfinal.sportcenter_api.exception.appointment.AppointmentNotPendingEx
 import com.tpfinal.sportcenter_api.exception.appointment.AppointmentOverlapException;
 import com.tpfinal.sportcenter_api.exception.appointment.UserAppointmentOverlapException;
 import com.tpfinal.sportcenter_api.exception.auth.InvalidCredentialsException;
+import com.tpfinal.sportcenter_api.exception.professional.ProfessionalHasAppointmentsException;
 import com.tpfinal.sportcenter_api.exception.professional.ProfessionalInactiveException;
 import com.tpfinal.sportcenter_api.exception.professional.ProfessionalNotFoundException;
+import com.tpfinal.sportcenter_api.exception.servicetype.ServiceTypeInUseException;
 import com.tpfinal.sportcenter_api.exception.servicetype.ServiceTypeNotFoundException;
 import com.tpfinal.sportcenter_api.exception.user.UserAlreadyExistsException;
 import com.tpfinal.sportcenter_api.exception.user.UserNotFoundException;
@@ -115,7 +117,8 @@ public class GlobalExceptionHandler {
      * Conflictos con el estado actual -> 409 Conflict: alta duplicada de usuario,
      * turno que se superpone con otro del mismo profesional o del mismo usuario,
      * intento de cancelar un turno ya cancelado, de confirmar uno que no
-     * está PENDING, o de reservar con un profesional inactivo.
+     * está PENDING, de reservar con un profesional inactivo, o de borrar un
+     * profesional/service type que sigue en uso.
      */
     @ExceptionHandler({
             UserAlreadyExistsException.class,
@@ -123,7 +126,9 @@ public class GlobalExceptionHandler {
             UserAppointmentOverlapException.class,
             AppointmentAlreadyCancelledException.class,
             AppointmentNotPendingException.class,
-            ProfessionalInactiveException.class
+            ProfessionalInactiveException.class,
+            ProfessionalHasAppointmentsException.class,
+            ServiceTypeInUseException.class
     })
     public ResponseEntity<Map<String, Object>> handleConflict(RuntimeException ex) {
         Map<String, Object> body = baseBody(HttpStatus.CONFLICT, ex.getMessage());

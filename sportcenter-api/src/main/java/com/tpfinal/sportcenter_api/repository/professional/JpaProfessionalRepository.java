@@ -7,4 +7,10 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface JpaProfessionalRepository extends JpaRepository<Professional, Long>, JpaSpecificationExecutor<Professional> {
+
+    /**
+     * Indica si algún profesional ofrece el service type dado (filas en la
+     * tabla de unión professional_service_types).
+     */
+    boolean existsByServicesId(Long serviceTypeId);
 }

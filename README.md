@@ -143,6 +143,10 @@ Profesional que presta servicios en el centro deportivo.
 
 El campo `serviceTypeIds` es opcional. Cada id debe ser un Long positivo no nulo (`@Positive`, `@NotNull`) y existir en `ServiceType` (sino `404 Not Found`). Se permite un máximo de 50 ids por request. En el `Response` los servicios se devuelven como `Set<ServiceTypeResponse>` bajo el campo `services`.
 
+##### Borrado
+
+Un profesional con **turnos asociados** (en cualquier estado, incluso cancelados o pasados) no se puede borrar: responde `409 Conflict` (`ProfessionalHasAppointmentsException`) — borrarlo violaría la FK y perdería el historial de esos turnos. La alternativa correcta es **desactivarlo** (`PUT` con `active = false`): deja de aceptar reservas nuevas (ver reglas de Appointment) sin tocar los turnos existentes.
+
 ##### Disponibilidad: `GET /{id}/availability?date=YYYY-MM-DD`
 
 Devuelve los **rangos horarios ocupados** del profesional para el día pedido, para que el frontend pueda mostrar la agenda y el usuario elija un horario libre en lugar de reservar a ciegas y recibir un `409`.
@@ -199,6 +203,13 @@ Tipo de servicio que ofrece el centro (ej: sesión de kinesiología, clase de yo
   "price": 8500.00
 }
 ```
+
+##### Borrado
+
+Un service type **en uso** no se puede borrar; responde `409 Conflict` (`ServiceTypeInUseException`) con un mensaje que indica qué lo bloquea:
+
+- **Turnos que lo referencian** (en cualquier estado): borrarlo violaría la FK y perdería historial.
+- **Profesionales que lo ofrecen** (filas en la tabla de unión `professional_service_types`): hay que quitarlo de esos profesionales primero (`PUT /professionals/{id}` sin ese id en `serviceTypeIds`). 
 
 ---
 
@@ -459,7 +470,7 @@ Adicionalmente, Bean Validation está activado en los callbacks pre-persist y pr
 | `401 Unauthorized` | Falta el token, o es inválido/expirado; o credenciales inválidas en el login. |
 | `403 Forbidden` | Autenticado pero sin permisos: un no-ADMIN en un endpoint de admin, o un usuario operando sobre un turno ajeno. |
 | `404 Not Found` | Recurso inexistente (usuario, profesional, service type o turno). |
-| `409 Conflict` | `username`/`email` duplicado, turno solapado (con otro turno del profesional o del propio usuario), turno ya cancelado, confirmación de un turno que no está `PENDING`, o reserva con un profesional inactivo. |
+| `409 Conflict` | `username`/`email` duplicado, turno solapado (con otro turno del profesional o del propio usuario), turno ya cancelado, confirmación de un turno que no está `PENDING`, reserva con un profesional inactivo, o borrado de un profesional/service type que sigue en uso. |
 | `500 Internal Server Error` | Error inesperado; el detalle se loguea en el servidor y **no** se expone al cliente. |
 
 Todos comparten el mismo formato de body de arriba. `GlobalExceptionHandler` es la única fuente de verdad: por eso las excepciones de dominio no usan `@ResponseStatus`.
@@ -497,6 +508,7 @@ cd sportcenter-api
 - `ProfessionalAvailabilityServiceTest` — agenda ocupada de un día: ventana de fechas correcta (excluye `CANCELLED`), lista vacía si el día está libre y `404` si el profesional no existe.
 - `AppointmentGetAllServiceTest` — listado filtrable: consulta por specification, passthrough de la página y `400` si `from` es posterior a `to` (sin tocar la base).
 - `AppointmentConfirmServiceTest` — confirmación: `PENDING → CONFIRMED` con `statusModifiedAt`, `409` si ya está confirmado o cancelado (sin persistir) y `404` propagado del finder.
+- `ProfessionalDeleterServiceTest` / `ServiceTypeDeleterServiceTest` — borrado bloqueado (`409`) cuando hay turnos asociados o profesionales que ofrecen el servicio, borrado exitoso cuando nada lo referencia y `404` propagado.
 - `JwtServiceTest` — generación y validación de tokens: token recién emitido válido, extracción del username (subject), rechazo de tokens basura, expirados o firmados con otra clave.
 - `LoginServiceTest` — login OK, normalización del email, `401` con credenciales inválidas y la **mitigación de timing** (verificación contra el hash señuelo cuando el email no existe).
 - `UserCreatorServiceTest` — normalización (trim/lowercase), hasheo de password, rol forzado a `USER` y `409` por username/email duplicado.

@@ -51,6 +51,19 @@ public interface JpaAppointmentRepository extends
             AppointmentStatusEnum excludedStatus);
 
     /**
+     * Indica si existe algún turno (en cualquier estado, incluso cancelado o
+     * pasado) que referencie al profesional. Lo usa el borrado de profesionales:
+     * con turnos asociados, el DELETE violaría la FK y además perdería historial.
+     */
+    boolean existsByProfessionalId(Long professionalId);
+
+    /**
+     * Ídem para tipos de servicio: un service type referenciado por turnos
+     * no puede borrarse físicamente.
+     */
+    boolean existsByServiceTypeId(Long serviceTypeId);
+
+    /**
      * Turnos activos del profesional que pisan el rango [startTime, endTime),
      * ordenados por hora de inicio. Misma condición de solapamiento que los
      * exists de arriba, pero devolviendo los turnos: lo usa la consulta de
