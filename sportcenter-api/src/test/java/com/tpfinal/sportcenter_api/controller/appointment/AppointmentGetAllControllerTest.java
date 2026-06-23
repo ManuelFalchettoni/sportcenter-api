@@ -76,7 +76,8 @@ class AppointmentGetAllControllerTest {
                         .param("from", "2026-07-01T00:00:00")
                         .param("to", "2026-07-31T23:59:59")
                         .param("status", "PENDING")
-                        .param("professionalId", "2"))
+                        .param("professionalId", "2")
+                        .param("query", "kinesio"))
                 .andExpect(status().isOk());
 
         ArgumentCaptor<AppointmentFilterRequest> captor =
@@ -87,6 +88,7 @@ class AppointmentGetAllControllerTest {
         assertEquals(LocalDateTime.of(2026, 7, 31, 23, 59, 59), filter.getTo());
         assertEquals(AppointmentStatusEnum.PENDING, filter.getStatus());
         assertEquals(2L, filter.getProfessionalId());
+        assertEquals("kinesio", filter.getQuery());
     }
 
     // Sin query params -> 200 y filtro vacío: todos los filtros son opcionales.
@@ -106,6 +108,7 @@ class AppointmentGetAllControllerTest {
         assertNull(captor.getValue().getTo());
         assertNull(captor.getValue().getStatus());
         assertNull(captor.getValue().getProfessionalId());
+        assertNull(captor.getValue().getQuery());
     }
 
     // Un estado que no existe en el enum -> 400 (handler de type mismatch).

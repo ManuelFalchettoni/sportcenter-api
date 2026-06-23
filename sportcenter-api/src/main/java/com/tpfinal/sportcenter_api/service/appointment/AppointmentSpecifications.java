@@ -45,4 +45,20 @@ public final class AppointmentSpecifications {
     public static Specification<Appointment> withProfessional(Long professionalId) {
         return (root, query, cb) -> cb.equal(root.get("professional").get("id"), professionalId);
     }
+
+    /**
+     * Turnos cuyas notas, nombre del profesional o nombre del tipo de servicio
+     * contienen el texto dado (case-insensitive). Es la búsqueda libre del
+     * listado: cubre los campos de texto que un usuario reconoce de un turno.
+     */
+    public static Specification<Appointment> matchesQuery(String text) {
+        return (root, query, cb) -> {
+            String like = "%" + text.toLowerCase() + "%";
+            return cb.or(
+                    cb.like(cb.lower(root.get("notes")), like),
+                    cb.like(cb.lower(root.get("professional").get("name")), like),
+                    cb.like(cb.lower(root.get("serviceType").get("name")), like)
+            );
+        };
+    }
 }

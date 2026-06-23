@@ -54,6 +54,9 @@ public class AppointmentGetAllService {
         if (filter.getProfessionalId() != null) {
             specs.add(AppointmentSpecifications.withProfessional(filter.getProfessionalId()));
         }
+        if (filter.getQuery() != null && !filter.getQuery().isBlank()) {
+            specs.add(AppointmentSpecifications.matchesQuery(filter.getQuery().trim()));
+        }
 
         // allOf combina con AND; con la lista vacía (ADMIN sin filtros) no restringe nada.
         return jpaAppointmentRepository.findAll(Specification.allOf(specs), pageable);

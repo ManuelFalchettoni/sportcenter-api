@@ -44,7 +44,7 @@ class AppointmentGetAllServiceTest {
     private static final Pageable PAGEABLE = PageRequest.of(0, 20);
 
     private static final AppointmentFilterRequest NO_FILTERS =
-            new AppointmentFilterRequest(null, null, null, null);
+            new AppointmentFilterRequest(null, null, null, null, null);
 
     private User adminCaller() {
         return new User(1L, "admin", "admin@example.com", "hash", UserEnum.ADMIN,
@@ -69,15 +69,16 @@ class AppointmentGetAllServiceTest {
         verify(jpaAppointmentRepository).findAll(any(Specification.class), eq(PAGEABLE));
     }
 
-    // Con filtros (USER + rango + estado + profesional) también consulta por
-    // specification: las condiciones se combinan en una sola consulta.
+    // Con filtros (USER + rango + estado + profesional + query) también consulta
+    // por specification: las condiciones se combinan en una sola consulta.
     @Test
     void findAll_acceptsAllFiltersCombined() {
         AppointmentFilterRequest filter = new AppointmentFilterRequest(
                 LocalDateTime.of(2026, 7, 1, 0, 0),
                 LocalDateTime.of(2026, 7, 31, 23, 59),
                 AppointmentStatusEnum.PENDING,
-                2L);
+                2L,
+                "kinesio");
         when(jpaAppointmentRepository.findAll(any(Specification.class), eq(PAGEABLE)))
                 .thenReturn(Page.empty());
 
@@ -92,7 +93,7 @@ class AppointmentGetAllServiceTest {
         AppointmentFilterRequest filter = new AppointmentFilterRequest(
                 LocalDateTime.of(2026, 7, 31, 0, 0),
                 LocalDateTime.of(2026, 7, 1, 0, 0),
-                null, null);
+                null, null, null);
 
         assertThrows(IllegalArgumentException.class,
                 () -> service.findAll(PAGEABLE, adminCaller(), filter));

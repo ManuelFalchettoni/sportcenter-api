@@ -21,12 +21,17 @@ public class AppointmentFilterRequest {
 
     private final Long professionalId;
 
+    /** Búsqueda libre sobre notas, nombre del profesional o del tipo de servicio. */
+    private final String query;
+
     public AppointmentFilterRequest(LocalDateTime from, LocalDateTime to,
-                                    AppointmentStatusEnum status, Long professionalId) {
+                                    AppointmentStatusEnum status, Long professionalId,
+                                    String query) {
         this.from = from;
         this.to = to;
         this.status = status;
         this.professionalId = professionalId;
+        this.query = query;
     }
 
     public LocalDateTime getFrom() {
@@ -43,5 +48,9 @@ public class AppointmentFilterRequest {
 
     public Long getProfessionalId() {
         return professionalId;
+    }
+
+    public String getQuery() {
+        return query;
     }
 }

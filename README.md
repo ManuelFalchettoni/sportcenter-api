@@ -417,7 +417,7 @@ Turno reservado entre un usuario y un profesional para un tipo de servicio deter
 | Método | Path                  | Descripción                       | Acceso          | Respuesta                              |
 |--------|-----------------------|-----------------------------------|-----------------|----------------------------------------|
 | GET    | `/{id}`               | Obtiene un turno por id           | Dueño o ADMIN   | `200 OK` · `AppointmentResponse`       |
-| GET    | `?page=&size=&sort=&from=&to=&status=&professionalId=` | Lista paginada y filtrable (ADMIN ve todos; USER solo los suyos) | Autenticado | `200 OK` · `Page<AppointmentResponse>` |
+| GET    | `?page=&size=&sort=&from=&to=&status=&professionalId=&query=` | Lista paginada y filtrable (ADMIN ve todos; USER solo los suyos) | Autenticado | `200 OK` · `Page<AppointmentResponse>` |
 | POST   | `/`                   | Crea un turno a nombre del autenticado | Autenticado | `201 Created` · `AppointmentResponse`  |
 | PUT    | `/{id}`               | Actualiza un turno                | Dueño o ADMIN   | `200 OK` · `AppointmentResponse`       |
 | PATCH  | `/{id}/confirm`       | Confirma un turno pendiente       | ADMIN           | `200 OK` · `AppointmentResponse`       |
@@ -434,12 +434,14 @@ Turno reservado entre un usuario y un profesional para un tipo de servicio deter
 | `to`             | ISO date-time                         | turnos con `startTime <= to` |
 | `status`         | `PENDING` \| `CONFIRMED` \| `CANCELLED` | estado exacto |
 | `professionalId` | Long                                  | turnos de ese profesional |
+| `query`          | texto libre (case-insensitive)        | turnos cuyas `notes`, nombre del profesional o nombre del tipo de servicio contienen el texto |
 
 Ejemplos:
 
 ```
 GET /sportcenter/appointments?from=2026-07-01T00:00:00&to=2026-07-31T23:59:59   # vista de calendario (julio)
 GET /sportcenter/appointments?from=2026-06-10T15:00:00&status=PENDING&sort=startTime,asc   # mis próximos turnos
+GET /sportcenter/appointments?query=kinesio   # notas, profesional o tipo de servicio contienen "kinesio"
 ```
 
 Reglas:
@@ -632,7 +634,7 @@ cd sportcenter-api
 - `UserPostControllerTest` — `201` (y que la respuesta **nunca expone el password**), `409` duplicado, `400` por validación.
 - `AppointmentPostControllerTest` — `201`, `404` entidad inexistente, `409` solapamiento, `400` por rango/fecha (`@Future`) o campos faltantes.
 - `ProfessionalAvailabilityControllerTest` — `200` con los slots (y que **no se filtra** ningún dato del turno ni del usuario), `404` profesional inexistente, `400` por `date` faltante o mal formado.
-- `AppointmentGetAllControllerTest` — parseo de los cuatro filtros hacia el servicio, `200` sin filtros, `400` por `status` inválido, fecha mal formada o `from > to`.
+- `AppointmentGetAllControllerTest` — parseo de los filtros (rango, estado, profesional y `query`) hacia el servicio, `200` sin filtros, `400` por `status` inválido, fecha mal formada o `from > to`.
 - `AppointmentConfirmControllerTest` — `200` con el turno confirmado, `409` si no está `PENDING`, `404` si no existe.
 
 > El test `contextLoads()` (`@SpringBootTest`) sí requiere una base de datos disponible, por eso queda fuera del filtro de arriba.

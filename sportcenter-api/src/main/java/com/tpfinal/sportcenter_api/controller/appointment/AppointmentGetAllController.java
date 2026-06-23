@@ -37,6 +37,8 @@ public class AppointmentGetAllController {
      * - from / to: rango sobre startTime, inclusive, en ISO yyyy-MM-dd'T'HH:mm:ss.
      * - status: PENDING | CONFIRMED | CANCELLED.
      * - professionalId: turnos de un profesional.
+     * - query: búsqueda libre (case-insensitive) sobre notas, nombre del
+     *   profesional o nombre del tipo de servicio.
      * Un valor mal formado responde 400 (handler de type mismatch).
      */
     @GetMapping
@@ -46,8 +48,9 @@ public class AppointmentGetAllController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime to,
             @RequestParam(required = false) AppointmentStatusEnum status,
             @RequestParam(required = false) Long professionalId,
+            @RequestParam(required = false) String query,
             @AuthenticationPrincipal UserPrincipal principal) {
-        AppointmentFilterRequest filter = new AppointmentFilterRequest(from, to, status, professionalId);
+        AppointmentFilterRequest filter = new AppointmentFilterRequest(from, to, status, professionalId, query);
         Page<AppointmentResponse> response = appointmentGetAllService
                 .findAll(pageable, principal.getUser(), filter)
                 .map(AppointmentResponse::toResponse);
