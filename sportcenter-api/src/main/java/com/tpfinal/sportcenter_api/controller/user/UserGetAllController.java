@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
@@ -24,12 +25,20 @@ public class UserGetAllController {
     }
 
     /**
-     * Lista usuarios en forma paginada.
+     * Lista usuarios en forma paginada. Parámetros de búsqueda opcionales
+     * (case-insensitive, se combinan con AND):
+     * - query: coincidencia sobre username o email.
+     * - username: coincidencia sobre username.
+     * - email: coincidencia sobre email.
      */
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping
-    public ResponseEntity<Page<UserResponse>> findAll(Pageable pageable) {
-        Page<UserResponse> response = userGetAllService.findAll(pageable)
+    public ResponseEntity<Page<UserResponse>> findAll(
+            Pageable pageable,
+            @RequestParam(required = false) String query,
+            @RequestParam(required = false) String username,
+            @RequestParam(required = false) String email) {
+        Page<UserResponse> response = userGetAllService.findAll(pageable, query, username, email)
                 .map(UserResponse::toResponse);
         return ResponseEntity.ok(response);
     }

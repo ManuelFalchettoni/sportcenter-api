@@ -7,6 +7,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
@@ -23,11 +24,19 @@ public class ProfessionalGetAllController {
     }
 
     /**
-     * Lista profesionales en forma paginada.
+     * Lista profesionales en forma paginada. Parámetros de búsqueda opcionales
+     * (case-insensitive, se combinan con AND):
+     * - query: coincidencia sobre nombre o especialidad.
+     * - name: coincidencia sobre nombre.
+     * - speciality: coincidencia sobre especialidad.
      */
     @GetMapping
-    public ResponseEntity<Page<ProfessionalResponse>> findAll(Pageable pageable) {
-        Page<ProfessionalResponse> response = professionalGetAllService.findAll(pageable)
+    public ResponseEntity<Page<ProfessionalResponse>> findAll(
+            Pageable pageable,
+            @RequestParam(required = false) String query,
+            @RequestParam(required = false) String name,
+            @RequestParam(required = false) String speciality) {
+        Page<ProfessionalResponse> response = professionalGetAllService.findAll(pageable, query, name, speciality)
                 .map(ProfessionalResponse::toResponse);
         return ResponseEntity.ok(response);
     }

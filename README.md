@@ -194,7 +194,7 @@ Profesional que presta servicios en el centro deportivo.
 | Método | Path                  | Descripción                       | Acceso      | Respuesta                      |
 |--------|-----------------------|-----------------------------------|-------------|--------------------------------|
 | GET    | `/{id}`               | Obtiene un profesional por id     | Autenticado | `200 OK` · `ProfessionalResponse` |
-| GET    | `?page=&size=&sort=`  | Lista paginada                    | Autenticado | `200 OK` · `Page<ProfessionalResponse>` |
+| GET    | `?page=&size=&sort=&query=&name=&speciality=` | Lista paginada y filtrable | Autenticado | `200 OK` · `Page<ProfessionalResponse>` |
 | GET    | `/{id}/availability?date=` | Horarios ocupados de un día  | Autenticado | `200 OK` · `ProfessionalAvailabilityResponse` |
 | POST   | `/`                   | Crea un profesional               | ADMIN       | `201 Created` + header `Location` |
 | PUT    | `/{id}`               | Actualiza un profesional          | ADMIN       | `200 OK` · `ProfessionalResponse` |
@@ -212,6 +212,26 @@ Profesional que presta servicios en el centro deportivo.
 ```
 
 El campo `serviceTypeIds` es opcional. Cada id debe ser un Long positivo no nulo (`@Positive`, `@NotNull`) y existir en `ServiceType` (sino `404 Not Found`). Se permite un máximo de 50 ids por request. En el `Response` los servicios se devuelven como `Set<ServiceTypeResponse>` bajo el campo `services`.
+
+##### Filtros del listado
+
+`GET /sportcenter/professionals` acepta, además de la paginación, estos query params opcionales de búsqueda (coincidencia parcial *case-insensitive*; se combinan con **AND**; los que no se envían o quedan vacíos no filtran):
+
+| Param        | Filtra por |
+|--------------|------------|
+| `query`      | `name` **o** `speciality` (búsqueda general en cualquiera de los dos) |
+| `name`       | solo `name` |
+| `speciality` | solo `speciality` |
+
+Ejemplos:
+
+```
+GET /sportcenter/professionals?query=kinesio            # nombre o especialidad contienen "kinesio"
+GET /sportcenter/professionals?speciality=kinesiologia  # solo por especialidad
+GET /sportcenter/professionals?name=lopez&speciality=kinesio   # ambos campos (AND)
+```
+
+Implementación: los filtros se traducen a `Specification`s (`ProfessionalSpecifications`) combinadas con AND y ejecutadas vía el `JpaSpecificationExecutor` del repositorio, así una sola consulta resuelve cualquier combinación.
 
 ##### Borrado
 
@@ -301,13 +321,33 @@ Usuario del sistema. La contraseña se almacena hasheada con BCrypt y nunca se d
 | Método | Path                  | Descripción                       | Acceso              | Respuesta                              |
 |--------|-----------------------|-----------------------------------|---------------------|----------------------------------------|
 | GET    | `/{id}`               | Obtiene un usuario por id         | ADMIN o el propio usuario | `200 OK` · `UserResponse`        |
-| GET    | `?page=&size=&sort=`  | Lista paginada                    | ADMIN               | `200 OK` · `Page<UserResponse>`        |
+| GET    | `?page=&size=&sort=&query=&username=&email=` | Lista paginada y filtrable | ADMIN     | `200 OK` · `Page<UserResponse>`        |
 | POST   | `/`                   | Crea un usuario (registro)        | Público             | `201 Created` · `UserResponse`         |
 | PUT    | `/{id}`               | Actualiza un usuario              | ADMIN o el propio usuario | `200 OK` · `UserResponse`        |
 | PATCH  | `/{id}/role`          | Cambia el rol                     | ADMIN               | `200 OK` · `UserResponse`              |
 | DELETE | `/{id}`               | Elimina un usuario                | ADMIN               | `204 No Content`                       |
 
 Si `username` o `email` ya existen, responde `409 Conflict` (`UserAlreadyExistsException`).
+
+##### Filtros del listado
+
+`GET /sportcenter/users` (solo ADMIN) acepta, además de la paginación, estos query params opcionales de búsqueda (coincidencia parcial *case-insensitive*; se combinan con **AND**; los que no se envían o quedan vacíos no filtran):
+
+| Param      | Filtra por |
+|------------|------------|
+| `query`    | `username` **o** `email` (búsqueda general en cualquiera de los dos) |
+| `username` | solo `username` |
+| `email`    | solo `email` |
+
+Ejemplos:
+
+```
+GET /sportcenter/users?query=manu              # username o email contienen "manu"
+GET /sportcenter/users?email=@example.com      # solo por email
+GET /sportcenter/users?username=manu&email=gmail   # ambos campos (AND)
+```
+
+Implementación: los filtros se traducen a `Specification`s (`UserSpecifications`) combinadas con AND y ejecutadas vía el `JpaSpecificationExecutor` del repositorio, así una sola consulta resuelve cualquier combinación.
 
 ##### Body de ejemplo (`POST` / `PUT`)
 
