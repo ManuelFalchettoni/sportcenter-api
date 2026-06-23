@@ -38,7 +38,7 @@ public class AppointmentGetAllController {
      * - status: PENDING | CONFIRMED | CANCELLED.
      * - professionalId: turnos de un profesional.
      * - query: búsqueda libre (case-insensitive) sobre notas, nombre del
-     *   profesional o nombre del tipo de servicio.
+     *   profesional, nombre del tipo de servicio o username del dueño.
      * Un valor mal formado responde 400 (handler de type mismatch).
      */
     @GetMapping

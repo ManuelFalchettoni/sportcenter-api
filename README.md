@@ -434,7 +434,7 @@ Turno reservado entre un usuario y un profesional para un tipo de servicio deter
 | `to`             | ISO date-time                         | turnos con `startTime <= to` |
 | `status`         | `PENDING` \| `CONFIRMED` \| `CANCELLED` | estado exacto |
 | `professionalId` | Long                                  | turnos de ese profesional |
-| `query`          | texto libre (case-insensitive)        | turnos cuyas `notes`, nombre del profesional o nombre del tipo de servicio contienen el texto |
+| `query`          | texto libre (case-insensitive)        | turnos cuyas `notes`, nombre del profesional, nombre del tipo de servicio o `username` del dueño contienen el texto |
 
 Ejemplos:
 

@@ -47,9 +47,11 @@ public final class AppointmentSpecifications {
     }
 
     /**
-     * Turnos cuyas notas, nombre del profesional o nombre del tipo de servicio
-     * contienen el texto dado (case-insensitive). Es la búsqueda libre del
-     * listado: cubre los campos de texto que un usuario reconoce de un turno.
+     * Turnos cuyas notas, nombre del profesional, nombre del tipo de servicio o
+     * username del dueño contienen el texto dado (case-insensitive). Es la
+     * búsqueda libre del listado: cubre los campos de texto que un usuario
+     * reconoce de un turno. El username solo discrimina para un ADMIN (que ve
+     * turnos de varios usuarios); para un USER todos los turnos son propios.
      */
     public static Specification<Appointment> matchesQuery(String text) {
         return (root, query, cb) -> {
@@ -57,7 +59,8 @@ public final class AppointmentSpecifications {
             return cb.or(
                     cb.like(cb.lower(root.get("notes")), like),
                     cb.like(cb.lower(root.get("professional").get("name")), like),
-                    cb.like(cb.lower(root.get("serviceType").get("name")), like)
+                    cb.like(cb.lower(root.get("serviceType").get("name")), like),
+                    cb.like(cb.lower(root.get("user").get("username")), like)
             );
         };
     }
