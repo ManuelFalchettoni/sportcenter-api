@@ -30,8 +30,29 @@ public class AppointmentGetAllService {
     /**
      * Devuelve la página de turnos solicitada, filtrada según el caller y los
      * filtros opcionales recibidos (los null no filtran; se combinan con AND).
+     * Un ADMIN ve todos los turnos; un USER solo los propios.
      */
     public Page<Appointment> findAll(Pageable pageable, User caller, AppointmentFilterRequest filter) {
+        // Ownership solo para no-ADMIN: el ADMIN ve los turnos de todos.
+        Long ownerId = caller.getRole() == UserEnum.ADMIN ? null : caller.getId();
+        return find(pageable, ownerId, filter);
+    }
+
+    /**
+     * Devuelve la página de turnos del usuario autenticado, sin importar su rol.
+     * A diferencia de findAll, acota siempre al dueño: es la vista "mis turnos",
+     * para que un ADMIN también pueda ver su propia agenda y no la del centro.
+     */
+    public Page<Appointment> findMine(Pageable pageable, User owner, AppointmentFilterRequest filter) {
+        return find(pageable, owner.getId(), filter);
+    }
+
+    /**
+     * Núcleo compartido del listado: arma las Specifications según los filtros y
+     * ejecuta la consulta paginada. Si ownerId no es null, acota a ese dueño
+     * (regla de ownership); si es null no restringe por usuario (ADMIN ve todo).
+     */
+    private Page<Appointment> find(Pageable pageable, Long ownerId, AppointmentFilterRequest filter) {
         if (filter.getFrom() != null && filter.getTo() != null && filter.getFrom().isAfter(filter.getTo())) {
             throw new IllegalArgumentException("'from' must be before or equal to 'to'");
         }
@@ -39,8 +60,8 @@ public class AppointmentGetAllService {
         List<Specification<Appointment>> specs = new ArrayList<>();
 
         // Ownership primero: un USER jamás ve turnos ajenos, filtre lo que filtre.
-        if (caller.getRole() != UserEnum.ADMIN) {
-            specs.add(AppointmentSpecifications.ownedBy(caller.getId()));
+        if (ownerId != null) {
+            specs.add(AppointmentSpecifications.ownedBy(ownerId));
         }
         if (filter.getFrom() != null) {
             specs.add(AppointmentSpecifications.startsAtOrAfter(filter.getFrom()));

@@ -56,4 +56,26 @@ public class AppointmentGetAllController {
                 .map(AppointmentResponse::toResponse);
         return ResponseEntity.ok(response);
     }
+
+    /**
+     * Lista los turnos del usuario autenticado, sin importar su rol: un ADMIN
+     * también ve solo los propios (su agenda personal), no los de todo el centro.
+     * Acepta los mismos filtros opcionales que findAll (se combinan con AND);
+     * la ruta literal /me gana sobre /{id}, así que no hay ambigüedad de ruteo.
+     */
+    @GetMapping("/me")
+    public ResponseEntity<Page<AppointmentResponse>> findMine(
+            Pageable pageable,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime from,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime to,
+            @RequestParam(required = false) AppointmentStatusEnum status,
+            @RequestParam(required = false) Long professionalId,
+            @RequestParam(required = false) String query,
+            @AuthenticationPrincipal UserPrincipal principal) {
+        AppointmentFilterRequest filter = new AppointmentFilterRequest(from, to, status, professionalId, query);
+        Page<AppointmentResponse> response = appointmentGetAllService
+                .findMine(pageable, principal.getUser(), filter)
+                .map(AppointmentResponse::toResponse);
+        return ResponseEntity.ok(response);
+    }
 }

@@ -367,6 +367,7 @@ Turno reservado entre un usuario y un profesional para un tipo de servicio deter
 |--------|-----------------------|-----------------------------------|-----------------|----------------------------------------|
 | GET    | `/{id}`               | Obtiene un turno por id           | Dueño o ADMIN   | `200 OK` · `AppointmentResponse`       |
 | GET    | `?page=&size=&sort=&from=&to=&status=&professionalId=&query=` | Lista paginada y filtrable (ADMIN ve todos; USER solo los suyos) | Autenticado | `200 OK` · `Page<AppointmentResponse>` |
+| GET    | `/me?page=&size=&sort=&from=&to=&status=&professionalId=&query=` | Lista paginada de los turnos **del usuario autenticado** (siempre, sin importar el rol) | Autenticado | `200 OK` · `Page<AppointmentResponse>` |
 | POST   | `/`                   | Crea un turno a nombre del autenticado | Autenticado | `201 Created` · `AppointmentResponse`  |
 | PUT    | `/{id}`               | Actualiza un turno                | Dueño o ADMIN   | `200 OK` · `AppointmentResponse`       |
 | PATCH  | `/{id}/confirm`       | Confirma un turno pendiente       | ADMIN           | `200 OK` · `AppointmentResponse`       |
@@ -402,6 +403,14 @@ Reglas:
 ##### Ownership
 
 El dueño de un turno es **siempre el usuario autenticado que lo creó**: el body no acepta `userId`, así nadie puede reservar a nombre de otro. Para operar sobre un turno existente, `AppointmentOwnershipValidator` exige ser el dueño o ADMIN; un tercero recibe `403 Forbidden`. El `PUT` no transfiere el turno: el dueño nunca cambia. En el listado, un `USER` ve únicamente sus turnos y un ADMIN ve todos.
+
+##### "Mis turnos": `GET /sportcenter/appointments/me`
+
+Lista paginada que devuelve **siempre los turnos del usuario autenticado, sin importar su rol**. Es la diferencia con `GET /sportcenter/appointments`, donde un ADMIN ve los turnos de todo el centro: para que un ADMIN pueda consultar *su propia* agenda (la pantalla "Mis turnos") necesita un endpoint que no relaje el ownership según el rol. Un `USER` obtiene exactamente el mismo resultado que en el listado general, así que el frontend puede llamar a `/me` para esa pantalla sea quien sea el que esté logueado, sin ramificar por rol.
+
+- Acepta **los mismos filtros opcionales** que el listado general (`from`, `to`, `status`, `professionalId`, `query`) y la misma paginación, combinados con AND. Los filtros nunca relajan el ownership: acotan *dentro* de los turnos propios.
+- La ruta literal `/me` tiene precedencia sobre `/{id}` en el ruteo de Spring, así que no hay ambigüedad con `GET /appointments/{id}`.
+- Implementación: `AppointmentGetAllService.findMine(...)` reusa el mismo núcleo de `Specification`s que `findAll`, pero aplica la specification de ownership **siempre** (no solo para no-ADMIN).
 
 ##### Body de ejemplo (`POST` / `PUT`)
 

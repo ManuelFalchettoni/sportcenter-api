@@ -111,6 +111,46 @@ class AppointmentGetAllControllerTest {
         assertNull(captor.getValue().getQuery());
     }
 
+    // /me parsea los mismos filtros y los pasa a findMine (no a findAll).
+    @Test
+    void findMine_parsesAllFiltersIntoTheRequest() throws Exception {
+        when(appointmentGetAllService.findMine(any(Pageable.class), any(User.class),
+                any(AppointmentFilterRequest.class)))
+                .thenReturn(Page.empty());
+
+        mockMvc.perform(get("/sportcenter/appointments/me")
+                        .param("from", "2026-07-01T00:00:00")
+                        .param("to", "2026-07-31T23:59:59")
+                        .param("status", "PENDING")
+                        .param("professionalId", "2")
+                        .param("query", "kinesio"))
+                .andExpect(status().isOk());
+
+        ArgumentCaptor<AppointmentFilterRequest> captor =
+                ArgumentCaptor.forClass(AppointmentFilterRequest.class);
+        verify(appointmentGetAllService).findMine(any(Pageable.class), any(User.class), captor.capture());
+        AppointmentFilterRequest filter = captor.getValue();
+        assertEquals(LocalDateTime.of(2026, 7, 1, 0, 0), filter.getFrom());
+        assertEquals(LocalDateTime.of(2026, 7, 31, 23, 59, 59), filter.getTo());
+        assertEquals(AppointmentStatusEnum.PENDING, filter.getStatus());
+        assertEquals(2L, filter.getProfessionalId());
+        assertEquals("kinesio", filter.getQuery());
+    }
+
+    // /me sin query params -> 200 y filtro vacío: todos los filtros son opcionales.
+    @Test
+    void findMine_worksWithoutFilters() throws Exception {
+        when(appointmentGetAllService.findMine(any(Pageable.class), any(User.class),
+                any(AppointmentFilterRequest.class)))
+                .thenReturn(Page.empty());
+
+        mockMvc.perform(get("/sportcenter/appointments/me"))
+                .andExpect(status().isOk());
+
+        verify(appointmentGetAllService).findMine(any(Pageable.class), any(User.class),
+                any(AppointmentFilterRequest.class));
+    }
+
     // Un estado que no existe en el enum -> 400 (handler de type mismatch).
     @Test
     void findAll_returns400WhenStatusIsInvalid() throws Exception {

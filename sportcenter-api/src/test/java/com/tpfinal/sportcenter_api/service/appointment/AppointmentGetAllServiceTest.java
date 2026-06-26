@@ -100,4 +100,32 @@ class AppointmentGetAllServiceTest {
 
         verify(jpaAppointmentRepository, never()).findAll(any(Specification.class), any(Pageable.class));
     }
+
+    // findMine consulta por specification y devuelve la página tal cual, incluso
+    // para un ADMIN: la vista "mis turnos" siempre acota al usuario autenticado.
+    @Test
+    void findMine_queriesBySpecificationAndReturnsPage() {
+        Page<Appointment> page = new PageImpl<>(List.of(new Appointment()));
+        when(jpaAppointmentRepository.findAll(any(Specification.class), eq(PAGEABLE)))
+                .thenReturn(page);
+
+        Page<Appointment> result = service.findMine(PAGEABLE, adminCaller(), NO_FILTERS);
+
+        assertEquals(page, result);
+        verify(jpaAppointmentRepository).findAll(any(Specification.class), eq(PAGEABLE));
+    }
+
+    // findMine también valida el rango: from posterior a to -> 400 sin tocar la base.
+    @Test
+    void findMine_throwsWhenFromIsAfterTo() {
+        AppointmentFilterRequest filter = new AppointmentFilterRequest(
+                LocalDateTime.of(2026, 7, 31, 0, 0),
+                LocalDateTime.of(2026, 7, 1, 0, 0),
+                null, null, null);
+
+        assertThrows(IllegalArgumentException.class,
+                () -> service.findMine(PAGEABLE, regularCaller(), filter));
+
+        verify(jpaAppointmentRepository, never()).findAll(any(Specification.class), any(Pageable.class));
+    }
 }
