@@ -19,25 +19,32 @@ public class ProfessionalRequest {
     @NotNull
     private Boolean active;
 
+    // Opcional: URL de la foto del profesional.
+    @Size(max = 500)
+    private String photoUrl;
+
     // Cada ID debe ser positivo y no nulo. Capear a 50 evita payloads abusivos
     // (un profesional con cientos de servicios distintos no tiene sentido funcional).
     @Size(max = 50)
     private Set<@NotNull @Positive Long> serviceTypeIds = new HashSet<>();
 
     public ProfessionalRequest(){};
-    public ProfessionalRequest(String name, String speciality, Boolean active, Set<Long> serviceTypeIds) {
+    public ProfessionalRequest(String name, String speciality, Boolean active, String photoUrl, Set<Long> serviceTypeIds) {
         this.name = name;
         this.speciality = speciality;
         this.active = active;
+        this.photoUrl = photoUrl;
         this.serviceTypeIds = serviceTypeIds != null ? serviceTypeIds : new HashSet<>();
     }
 
     static public Professional fromRequest (ProfessionalRequest request){
-        return new Professional(
+        Professional professional = new Professional(
                 request.getName(),
                 request.getSpeciality(),
                 request.getActive()
         );
+        professional.setPhotoUrl(request.getPhotoUrl());
+        return professional;
     }
 
     public String getName() {
@@ -62,6 +69,14 @@ public class ProfessionalRequest {
 
     public void setActive(Boolean active) {
         this.active = active;
+    }
+
+    public String getPhotoUrl() {
+        return photoUrl;
+    }
+
+    public void setPhotoUrl(String photoUrl) {
+        this.photoUrl = photoUrl;
     }
 
     public Set<Long> getServiceTypeIds() {

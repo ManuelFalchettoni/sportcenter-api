@@ -12,14 +12,16 @@ public class ProfessionalResponse {
     private String name;
     private String speciality;
     private Boolean active;
+    private String photoUrl;
     private Set<ServiceTypeResponse> services;
 
     public ProfessionalResponse(){};
-    public ProfessionalResponse(Long id, String name, String speciality, Boolean active, Set<ServiceTypeResponse> services) {
+    public ProfessionalResponse(Long id, String name, String speciality, Boolean active, String photoUrl, Set<ServiceTypeResponse> services) {
         this.id = id;
         this.name = name;
         this.speciality = speciality;
         this.active = active;
+        this.photoUrl = photoUrl;
         this.services = services;
     }
 
@@ -34,6 +36,7 @@ public class ProfessionalResponse {
                 professional.getName(),
                 professional.getSpeciality(),
                 professional.getActive(),
+                professional.getPhotoUrl(),
                 services
         );
     }
@@ -68,6 +71,14 @@ public class ProfessionalResponse {
 
     public void setActive(Boolean active) {
         this.active = active;
+    }
+
+    public String getPhotoUrl() {
+        return photoUrl;
+    }
+
+    public void setPhotoUrl(String photoUrl) {
+        this.photoUrl = photoUrl;
     }
 
     public Set<ServiceTypeResponse> getServices() {

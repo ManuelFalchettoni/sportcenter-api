@@ -136,6 +136,7 @@ Profesional que presta servicios en el centro deportivo.
 | `name`       | String  | `@NotBlank`, `@Size(2..100)` |
 | `speciality` | String  | `@NotBlank`, `@Size(3..50)`  |
 | `active`     | Boolean | `@NotNull`             |
+| `photoUrl`   | String  | opcional, `@Size(max 500)` — URL de la foto del profesional |
 | `services`   | Set<ServiceType> | `@ManyToMany` — servicios que ofrece (tabla `professional_service_types`) |
 
 #### Endpoints — base: `/sportcenter/professionals`
@@ -156,11 +157,12 @@ Profesional que presta servicios en el centro deportivo.
   "name": "Juan Pérez",
   "speciality": "Kinesiología",
   "active": true,
+  "photoUrl": "https://misfotos.com/juan-perez.jpg",
   "serviceTypeIds": [1, 2]
 }
 ```
 
-El campo `serviceTypeIds` es opcional. Cada id debe ser un Long positivo no nulo (`@Positive`, `@NotNull`) y existir en `ServiceType` (sino `404 Not Found`). Se permite un máximo de 50 ids por request. En el `Response` los servicios se devuelven como `Set<ServiceTypeResponse>` bajo el campo `services`.
+El campo `photoUrl` es opcional (máximo 500 caracteres) y se devuelve tal cual en el `Response`. El campo `serviceTypeIds` es opcional. Cada id debe ser un Long positivo no nulo (`@Positive`, `@NotNull`) y existir en `ServiceType` (sino `404 Not Found`). Se permite un máximo de 50 ids por request. En el `Response` los servicios se devuelven como `Set<ServiceTypeResponse>` bajo el campo `services`.
 
 ##### Filtros del listado
 

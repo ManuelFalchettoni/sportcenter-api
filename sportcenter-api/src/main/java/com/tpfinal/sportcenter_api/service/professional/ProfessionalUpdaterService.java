@@ -14,8 +14,8 @@ import java.util.Set;
 /**
  * Servicio encargado de actualizar profesionales existentes.
  * <p>
- * Reemplaza nombre, especialidad, estado activo y los tipos de servicio
- * asociados (resueltos a partir de sus IDs).
+ * Reemplaza nombre, especialidad, estado activo, URL de foto y los tipos de
+ * servicio asociados (resueltos a partir de sus IDs).
  */
 @Service
 public class ProfessionalUpdaterService {
@@ -39,6 +39,7 @@ public class ProfessionalUpdaterService {
         professional.setName(request.getName());
         professional.setSpeciality(request.getSpeciality());
         professional.setActive(request.getActive());
+        professional.setPhotoUrl(request.getPhotoUrl());
         professional.setServices(resolveServices(request.getServiceTypeIds()));
         return jpaProfessionalRepository.save(professional);
     }

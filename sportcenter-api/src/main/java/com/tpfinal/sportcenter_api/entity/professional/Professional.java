@@ -26,6 +26,9 @@ public class Professional {
     @NotNull
     @Column(nullable = false)
     private Boolean active;
+    @Size(max = 500)
+    @Column(length = 500)
+    private String photoUrl;
 
     //creacion de tabla relacional. LAZY carga los servicios solo si los solicito con el get
     @ManyToMany(fetch = FetchType.LAZY)
@@ -73,6 +76,14 @@ public class Professional {
 
     public void setActive(Boolean active) {
         this.active = active;
+    }
+
+    public String getPhotoUrl() {
+        return photoUrl;
+    }
+
+    public void setPhotoUrl(String photoUrl) {
+        this.photoUrl = photoUrl;
     }
 
     public Set<ServiceType> getServices() {
